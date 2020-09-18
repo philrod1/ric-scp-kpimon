@@ -63,3 +63,8 @@ COPY --from=kpimonbuild /go/src/gerrit.o-ran-sc.org/r/ric-plt/xapp-frame/config/
 WORKDIR /go/src/gerrit.o-ran-sc.org/r/scp/ric-app/kpimon
 COPY --from=kpimonbuild /go/src/gerrit.o-ran-sc.org/r/scp/ric-app/kpimon/kpimon .
 
+ENV  RMR_RTG_SVC="9999" \
+     VERBOSE=0 \
+     CONFIG_FILE=/go/src/gerrit.o-ran-sc.org/r/ric-plt/xapp-frame/config/config-file.yaml
+
+CMD ./kpimon -f $CONFIG_FILE
