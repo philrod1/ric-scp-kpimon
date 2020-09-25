@@ -262,8 +262,14 @@ func (c *E2sm) GetIndicationHeader(buffer []byte) (indHdr *IndicationHeader, err
 			}
 		}
 
+		if indHdrFormat1_C.fiveQI != nil {
+			indHdrFormat1.FiveQI = *(*int64)(unsafe.Pointer(indHdrFormat1_C.fiveQI))
+		} else {
+			indHdrFormat1.FiveQI = -1
+		}
+
 		if indHdrFormat1_C.qci != nil {
-			indHdrFormat1.Qci = int64(*indHdrFormat1_C.qci)
+			indHdrFormat1.Qci = *(*int64)(unsafe.Pointer(indHdrFormat1_C.qci))
 		} else {
 			indHdrFormat1.Qci = -1
 		}
