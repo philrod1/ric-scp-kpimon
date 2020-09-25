@@ -14,8 +14,6 @@
 /* Including external dependencies */
 #include "PLMN-Identity.h"
 #include <NativeInteger.h>
-#include "UE-Report-Type.h"
-#include "GNB-DU-ID.h"
 #include <constr_SEQUENCE.h>
 
 #ifdef __cplusplus
@@ -26,8 +24,6 @@ extern "C" {
 struct GlobalKPMnode_ID;
 struct NRCGI;
 struct SNSSAI;
-struct GNB_Name;
-struct GlobalgNB_ID;
 
 /* E2SM-KPM-IndicationHeader-Format1 */
 typedef struct E2SM_KPM_IndicationHeader_Format1 {
@@ -37,10 +33,6 @@ typedef struct E2SM_KPM_IndicationHeader_Format1 {
 	struct SNSSAI	*sliceID;	/* OPTIONAL */
 	long	*fiveQI;	/* OPTIONAL */
 	long	*qci;	/* OPTIONAL */
-	UE_Report_Type_t	*message_Type;	/* OPTIONAL */
-	GNB_DU_ID_t	*gNB_DU_ID;	/* OPTIONAL */
-	struct GNB_Name	*gNB_Name;	/* OPTIONAL */
-	struct GlobalgNB_ID	*global_GNB_ID;	/* OPTIONAL */
 	/*
 	 * This type is extensible,
 	 * possible extensions are below.
@@ -53,7 +45,7 @@ typedef struct E2SM_KPM_IndicationHeader_Format1 {
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_E2SM_KPM_IndicationHeader_Format1;
 extern asn_SEQUENCE_specifics_t asn_SPC_E2SM_KPM_IndicationHeader_Format1_specs_1;
-extern asn_TYPE_member_t asn_MBR_E2SM_KPM_IndicationHeader_Format1_1[10];
+extern asn_TYPE_member_t asn_MBR_E2SM_KPM_IndicationHeader_Format1_1[6];
 
 #ifdef __cplusplus
 }

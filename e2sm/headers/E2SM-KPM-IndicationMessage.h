@@ -47,10 +47,6 @@ typedef struct E2SM_KPM_IndicationMessage {
 		/* Context for parsing across buffer boundaries */
 		asn_struct_ctx_t _asn_ctx;
 	} indicationMessage;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
 	
 	/* Context for parsing across buffer boundaries */
 	asn_struct_ctx_t _asn_ctx;

@@ -302,32 +302,6 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 		if indHdrFormat1.Qci != -1 {
 			log.Printf("QCI: %d", indHdrFormat1.Qci)
 		}
-
-		if indHdrFormat1.UeMessageType != -1 {
-			log.Printf("Ue Report type: %d", indHdrFormat1.UeMessageType)
-		}
-
-		if indHdrFormat1.GnbDUID != nil {
-			log.Printf("gNB-DU-ID: %x", indHdrFormat1.GnbDUID.Buf)
-		}
-
-		if indHdrFormat1.GnbNameType == 1 {
-			log.Printf("gNB-DU-Name: %x", (indHdrFormat1.GnbName.(GNB_DU_Name)).Buf)
-		} else if indHdrFormat1.GnbNameType == 2 {
-			log.Printf("gNB-CU-CP-Name: %x", (indHdrFormat1.GnbName.(GNB_CU_CP_Name)).Buf)
-		} else if indHdrFormat1.GnbNameType == 3 {
-			log.Printf("gNB-CU-UP-Name: %x", (indHdrFormat1.GnbName.(GNB_CU_UP_Name)).Buf)
-		}
-
-		if indHdrFormat1.GlobalgNBID != nil {
-			log.Printf("PlmnID: %x", indHdrFormat1.GlobalgNBID.PlmnID.Buf)
-			log.Printf("gNB ID Type: %d", indHdrFormat1.GlobalgNBID.GnbIDType)
-			if indHdrFormat1.GlobalgNBID.GnbIDType == 1 {
-				gNBID := indHdrFormat1.GlobalgNBID.GnbID.(GNBID)
-				log.Printf("gNB ID ID: %x, Unused: %d", gNBID.Buf, gNBID.BitsUnused)
-			}
-		}
-
 	} else {
 		xapp.Logger.Error("Unknown RIC Indication Header Format: %d", indicationHdr.IndHdrType)
 		log.Printf("Unknown RIC Indication Header Format: %d", indicationHdr.IndHdrType)

@@ -141,11 +141,6 @@ type IndicationHeaderFormat1 struct {
 	SliceID             *SliceIDType
 	FiveQI              int64
 	Qci                 int64
-	UeMessageType       int32
-	GnbDUID             *Integer
-	GnbNameType         int32
-	GnbName             interface{}
-	GlobalgNBID         *GlobalgNBIDType
 }
 
 type IndicationHeader struct {

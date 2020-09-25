@@ -21,7 +21,6 @@
 #include "ENB-ID.h"
 #include "NRCGI.h"
 #include "SNSSAI.h"
-#include "GNB-Name.h"
 #include "E2SM-KPM-IndicationMessage.h"
 #include "E2SM-KPM-IndicationMessage-Format1.h"
 #include "PM-Containers-List.h"
@@ -44,15 +43,6 @@
 #include "FQIPERSlicesPerPlmnListItem.h"
 #include "EPC-CUUP-PM-Format.h"
 #include "PerQCIReportListItemFormat.h"
-#include "DU-Usage-Report-Per-UE.h"
-#include "DU-Usage-Report-CellResourceReportItem.h"
-#include "DU-Usage-Report-UeResourceReportItem.h"
-#include "CU-CP-Usage-Report-Per-UE.h"
-#include "CU-CP-Usage-Report-CellResourceReportItem.h"
-#include "CU-CP-Usage-Report-UeResourceReportItem.h"
-#include "CU-UP-Usage-Report-Per-UE.h"
-#include "CU-UP-Usage-Report-CellResourceReportItem.h"
-#include "CU-UP-Usage-Report-UeResourceReportItem.h"
 
 ssize_t e2sm_encode_ric_event_trigger_definition(void *buffer, size_t buf_size, size_t event_trigger_count, long *RT_periods);
 ssize_t e2sm_encode_ric_action_definition(void *buffer, size_t buf_size, long ric_style_type);

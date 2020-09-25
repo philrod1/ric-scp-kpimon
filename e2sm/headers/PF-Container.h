@@ -24,8 +24,6 @@ typedef enum PF_Container_PR {
 	PF_Container_PR_oDU,
 	PF_Container_PR_oCU_CP,
 	PF_Container_PR_oCU_UP
-	/* Extensions may appear below */
-	
 } PF_Container_PR;
 
 /* Forward declarations */
@@ -40,10 +38,6 @@ typedef struct PF_Container {
 		struct ODU_PF_Container	*oDU;
 		struct OCUCP_PF_Container	*oCU_CP;
 		struct OCUUP_PF_Container	*oCU_UP;
-		/*
-		 * This type is extensible,
-		 * possible extensions are below.
-		 */
 	} choice;
 	
 	/* Context for parsing across buffer boundaries */

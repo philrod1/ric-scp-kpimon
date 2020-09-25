@@ -12,60 +12,30 @@
 #include <asn_application.h>
 
 /* Including external dependencies */
-#include "Timestamp.h"
-#include <constr_CHOICE.h>
-#include <constr_SEQUENCE.h>
+#include <OCTET_STRING.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Dependencies */
-typedef enum RAN_Container__reportContainer_PR {
-	RAN_Container__reportContainer_PR_NOTHING,	/* No components present */
-	RAN_Container__reportContainer_PR_oDU_UE,
-	RAN_Container__reportContainer_PR_oCU_CP_UE,
-	RAN_Container__reportContainer_PR_oCU_UP_UE
-	/* Extensions may appear below */
-	
-} RAN_Container__reportContainer_PR;
-
-/* Forward declarations */
-struct DU_Usage_Report_Per_UE;
-struct CU_CP_Usage_Report_Per_UE;
-struct CU_UP_Usage_Report_Per_UE;
-
 /* RAN-Container */
-typedef struct RAN_Container {
-	Timestamp_t	 timestamp;
-	struct RAN_Container__reportContainer {
-		RAN_Container__reportContainer_PR present;
-		union RAN_Container__reportContainer_u {
-			struct DU_Usage_Report_Per_UE	*oDU_UE;
-			struct CU_CP_Usage_Report_Per_UE	*oCU_CP_UE;
-			struct CU_UP_Usage_Report_Per_UE	*oCU_UP_UE;
-			/*
-			 * This type is extensible,
-			 * possible extensions are below.
-			 */
-		} choice;
-		
-		/* Context for parsing across buffer boundaries */
-		asn_struct_ctx_t _asn_ctx;
-	} reportContainer;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
-} RAN_Container_t;
+typedef OCTET_STRING_t	 RAN_Container_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_RAN_Container;
-extern asn_SEQUENCE_specifics_t asn_SPC_RAN_Container_specs_1;
-extern asn_TYPE_member_t asn_MBR_RAN_Container_1[2];
+asn_struct_free_f RAN_Container_free;
+asn_struct_print_f RAN_Container_print;
+asn_constr_check_f RAN_Container_constraint;
+ber_type_decoder_f RAN_Container_decode_ber;
+der_type_encoder_f RAN_Container_encode_der;
+xer_type_decoder_f RAN_Container_decode_xer;
+xer_type_encoder_f RAN_Container_encode_xer;
+oer_type_decoder_f RAN_Container_decode_oer;
+oer_type_encoder_f RAN_Container_encode_oer;
+per_type_decoder_f RAN_Container_decode_uper;
+per_type_encoder_f RAN_Container_encode_uper;
+per_type_decoder_f RAN_Container_decode_aper;
+per_type_encoder_f RAN_Container_encode_aper;
 
 #ifdef __cplusplus
 }

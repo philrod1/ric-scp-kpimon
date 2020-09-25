@@ -29,6 +29,7 @@ COPY e2ap/ e2ap/
 COPY e2sm/ e2sm/
 
 # "COMPILING E2AP Wrapper"
+# -DASN_EMIT_DEBUG=1
 RUN cd e2ap && \
     gcc -c -fPIC -Iheaders/ lib/*.c wrapper.c && \
     gcc *.o -shared -o libe2apwrapper.so && \
@@ -39,7 +40,7 @@ RUN cd e2ap && \
 
 # "COMPILING E2SM Wrapper"
 RUN cd e2sm && \
-    gcc -c -fPIC -Iheaders/ lib/*.c wrapper.c && \
+    gcc -DASN_EMIT_DEBUG=1 -c -fPIC -Iheaders/ lib/*.c wrapper.c && \
     gcc *.o -shared -o libe2smwrapper.so && \
     cp libe2smwrapper.so /usr/local/lib/ && \
     mkdir /usr/local/include/e2sm && \

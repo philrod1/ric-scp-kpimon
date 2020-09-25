@@ -22,7 +22,6 @@ extern "C" {
 typedef PrintableString_t	 GNB_DU_Name_t;
 
 /* Implementation */
-extern asn_per_constraints_t asn_PER_type_GNB_DU_Name_constr_1;
 extern asn_TYPE_descriptor_t asn_DEF_GNB_DU_Name;
 asn_struct_free_f GNB_DU_Name_free;
 asn_struct_print_f GNB_DU_Name_print;

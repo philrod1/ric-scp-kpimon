@@ -88,7 +88,7 @@ static asn_SEQUENCE_specifics_t asn_SPC_E2SM_KPM_IndicationMessage_specs_1 = {
 	asn_MAP_E2SM_KPM_IndicationMessage_tag2el_1,
 	2,	/* Count of tags in the map */
 	0, 0, 0,	/* Optional elements (not needed) */
-	2,	/* First extension addition */
+	-1,	/* First extension addition */
 };
 asn_TYPE_descriptor_t asn_DEF_E2SM_KPM_IndicationMessage = {
 	"E2SM-KPM-IndicationMessage",
