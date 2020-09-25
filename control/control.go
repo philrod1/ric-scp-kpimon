@@ -181,7 +181,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 	log.Printf("-----------RIC Indication Header-----------")
 	if indicationHdr.IndHdrType == 1 {
 		log.Printf("RIC Indication Header Format: %d", indicationHdr.IndHdrType)
-		indHdrFormat1 := indicationHdr.IndHdr.(IndicationHeaderFormat1)
+		indHdrFormat1 := indicationHdr.IndHdr.(*IndicationHeaderFormat1)
 
 		log.Printf("GlobalKPMnodeIDType: %d", indHdrFormat1.GlobalKPMnodeIDType)
 
@@ -329,7 +329,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 	if indMsg.IndMsgType == 1 {
 		log.Printf("RIC Indication Message Format: %d", indMsg.IndMsgType)
 
-		indMsgFormat1 := indMsg.IndMsg.(IndicationMessageFormat1)
+		indMsgFormat1 := indMsg.IndMsg.(*IndicationMessageFormat1)
 
 		log.Printf("PMContainerCount: %d", indMsgFormat1.PMContainerCount)
 

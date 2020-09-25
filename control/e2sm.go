@@ -70,7 +70,7 @@ func (c *E2sm) GetIndicationHeader(buffer []byte) (indHdr *IndicationHeader, err
 	indHdr.IndHdrType = int32(decodedHdr.present)
 	if indHdr.IndHdrType == 1 {
 		indHdrFormat1 := &IndicationHeaderFormat1{}
-		indHdrFormat1_C := (*C.E2SM_KPM_IndicationHeader_Format1_t)(unsafe.Pointer(&decodedHdr.choice[0]))
+		indHdrFormat1_C := *(**C.E2SM_KPM_IndicationHeader_Format1_t)(unsafe.Pointer(&decodedHdr.choice[0]))
 
 		if indHdrFormat1_C.id_GlobalKPMnode_ID != nil {
 			globalKPMnodeID_C := (*C.GlobalKPMnode_ID_t)(indHdrFormat1_C.id_GlobalKPMnode_ID)
