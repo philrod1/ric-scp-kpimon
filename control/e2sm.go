@@ -297,13 +297,13 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 
 	if indMsg.IndMsgType == 1 {
 		indMsgFormat1 := &IndicationMessageFormat1{}
-		indMsgFormat1_C := (*C.E2SM_KPM_IndicationMessage_Format1_t)(unsafe.Pointer(&decodedMsg.indicationMessage.choice[0]))
+		indMsgFormat1_C := *(**C.E2SM_KPM_IndicationMessage_Format1_t)(unsafe.Pointer(&decodedMsg.indicationMessage.choice[0]))
 
 		indMsgFormat1.PMContainerCount = int(indMsgFormat1_C.pm_Containers.list.count)
 		for i := 0; i < indMsgFormat1.PMContainerCount; i++ {
-			pmContainer := indMsgFormat1.PMContainers[i]
+			pmContainer := &indMsgFormat1.PMContainers[i]
 			var sizeof_PM_Containers_List_t *C.PM_Containers_List_t
-			pmContainer_C := (*C.PM_Containers_List_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(indMsgFormat1_C.pm_Containers.list.array)) + (uintptr)(i)*unsafe.Sizeof(sizeof_PM_Containers_List_t)))
+			pmContainer_C := *(**C.PM_Containers_List_t)(unsafe.Pointer(uintptr(unsafe.Pointer(indMsgFormat1_C.pm_Containers.list.array)) + (uintptr)(i)*unsafe.Sizeof(sizeof_PM_Containers_List_t)))
 
 			if pmContainer_C.performanceContainer != nil {
 				pfContainer := &PFContainerType{}
@@ -312,13 +312,13 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 
 				if pfContainer.ContainerType == 1 {
 					oDU_PF := &ODUPFContainerType{}
-					oDU_PF_C := (*C.ODU_PF_Container_t)(unsafe.Pointer(&pmContainer_C.performanceContainer.choice[0]))
+					oDU_PF_C := *(**C.ODU_PF_Container_t)(unsafe.Pointer(&pmContainer_C.performanceContainer.choice[0]))
 
 					oDU_PF.CellResourceReportCount = int(oDU_PF_C.cellResourceReportList.list.count)
 					for j := 0; j < oDU_PF.CellResourceReportCount; j++ {
-						cellResourceReport := oDU_PF.CellResourceReports[j]
+						cellResourceReport := &oDU_PF.CellResourceReports[j]
 						var sizeof_CellResourceReportListItem_t *C.CellResourceReportListItem_t
-						cellResourceReport_C := (*C.CellResourceReportListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(oDU_PF_C.cellResourceReportList.list.array)) + (uintptr)(j)*unsafe.Sizeof(sizeof_CellResourceReportListItem_t)))
+						cellResourceReport_C := *(**C.CellResourceReportListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(oDU_PF_C.cellResourceReportList.list.array)) + (uintptr)(j)*unsafe.Sizeof(sizeof_CellResourceReportListItem_t)))
 
 						cellResourceReport.NRCGI.PlmnID.Buf = C.GoBytes(unsafe.Pointer(cellResourceReport_C.nRCGI.pLMN_Identity.buf), C.int(cellResourceReport_C.nRCGI.pLMN_Identity.size))
 						cellResourceReport.NRCGI.PlmnID.Size = int(cellResourceReport_C.nRCGI.pLMN_Identity.size)
@@ -343,7 +343,7 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 						for k := 0; k < cellResourceReport.ServedPlmnPerCellCount; k++ {
 							servedPlmnPerCell := cellResourceReport.ServedPlmnPerCells[k]
 							var sizeof_ServedPlmnPerCellListItem_t *C.ServedPlmnPerCellListItem_t
-							servedPlmnPerCell_C := (*C.ServedPlmnPerCellListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(cellResourceReport_C.servedPlmnPerCellList.list.array)) + (uintptr)(k)*unsafe.Sizeof(sizeof_ServedPlmnPerCellListItem_t)))
+							servedPlmnPerCell_C := *(**C.ServedPlmnPerCellListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(cellResourceReport_C.servedPlmnPerCellList.list.array)) + (uintptr)(k)*unsafe.Sizeof(sizeof_ServedPlmnPerCellListItem_t)))
 
 							servedPlmnPerCell.PlmnID.Buf = C.GoBytes(unsafe.Pointer(servedPlmnPerCell_C.pLMN_Identity.buf), C.int(servedPlmnPerCell_C.pLMN_Identity.size))
 							servedPlmnPerCell.PlmnID.Size = int(servedPlmnPerCell_C.pLMN_Identity.size)
@@ -354,9 +354,9 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 
 								duPM5GC.SlicePerPlmnPerCellCount = int(duPM5GC_C.slicePerPlmnPerCellList.list.count)
 								for l := 0; l < duPM5GC.SlicePerPlmnPerCellCount; l++ {
-									slicePerPlmnPerCell := duPM5GC.SlicePerPlmnPerCells[l]
+									slicePerPlmnPerCell := &duPM5GC.SlicePerPlmnPerCells[l]
 									var sizeof_SlicePerPlmnPerCellListItem_t *C.SlicePerPlmnPerCellListItem_t
-									slicePerPlmnPerCell_C := (*C.SlicePerPlmnPerCellListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(duPM5GC_C.slicePerPlmnPerCellList.list.array)) + (uintptr)(l)*unsafe.Sizeof(sizeof_SlicePerPlmnPerCellListItem_t)))
+									slicePerPlmnPerCell_C := *(**C.SlicePerPlmnPerCellListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(duPM5GC_C.slicePerPlmnPerCellList.list.array)) + (uintptr)(l)*unsafe.Sizeof(sizeof_SlicePerPlmnPerCellListItem_t)))
 
 									slicePerPlmnPerCell.SliceID.SST.Buf = C.GoBytes(unsafe.Pointer(slicePerPlmnPerCell_C.sliceID.sST.buf), C.int(slicePerPlmnPerCell_C.sliceID.sST.size))
 									slicePerPlmnPerCell.SliceID.SST.Size = int(slicePerPlmnPerCell_C.sliceID.sST.size)
@@ -369,9 +369,9 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 
 									slicePerPlmnPerCell.FQIPERSlicesPerPlmnPerCellCount = int(slicePerPlmnPerCell_C.fQIPERSlicesPerPlmnPerCellList.list.count)
 									for m := 0; m < slicePerPlmnPerCell.FQIPERSlicesPerPlmnPerCellCount; m++ {
-										fQIPerSlicesPerPlmnPerCell := slicePerPlmnPerCell.FQIPERSlicesPerPlmnPerCells[m]
+										fQIPerSlicesPerPlmnPerCell := &slicePerPlmnPerCell.FQIPERSlicesPerPlmnPerCells[m]
 										var sizeof_FQIPERSlicesPerPlmnPerCellListItem_t *C.FQIPERSlicesPerPlmnPerCellListItem_t
-										fQIPerSlicesPerPlmnPerCell_C := (*C.FQIPERSlicesPerPlmnPerCellListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(slicePerPlmnPerCell_C.fQIPERSlicesPerPlmnPerCellList.list.array)) + (uintptr)(m)*unsafe.Sizeof(sizeof_FQIPERSlicesPerPlmnPerCellListItem_t)))
+										fQIPerSlicesPerPlmnPerCell_C := *(**C.FQIPERSlicesPerPlmnPerCellListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(slicePerPlmnPerCell_C.fQIPERSlicesPerPlmnPerCellList.list.array)) + (uintptr)(m)*unsafe.Sizeof(sizeof_FQIPERSlicesPerPlmnPerCellListItem_t)))
 
 										fQIPerSlicesPerPlmnPerCell.FiveQI = int64(fQIPerSlicesPerPlmnPerCell_C.fiveQI)
 
@@ -398,9 +398,9 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 
 								duPMEPC.PerQCIReportCount = int(duPMEPC_C.perQCIReportList.list.count)
 								for l := 0; l < duPMEPC.PerQCIReportCount; l++ {
-									perQCIReport := duPMEPC.PerQCIReports[l]
+									perQCIReport := &duPMEPC.PerQCIReports[l]
 									var sizeof_PerQCIReportListItem_t *C.PerQCIReportListItem_t
-									perQCIReport_C := (*C.PerQCIReportListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(duPMEPC_C.perQCIReportList.list.array)) + (uintptr)(l)*unsafe.Sizeof(sizeof_PerQCIReportListItem_t)))
+									perQCIReport_C := *(**C.PerQCIReportListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(duPMEPC_C.perQCIReportList.list.array)) + (uintptr)(l)*unsafe.Sizeof(sizeof_PerQCIReportListItem_t)))
 
 									perQCIReport.QCI = int64(perQCIReport_C.qci)
 
@@ -425,7 +425,7 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 					pfContainer.Container = oDU_PF
 				} else if pfContainer.ContainerType == 2 {
 					oCU_CP_PF := &OCUCPPFContainerType{}
-					oCU_CP_PF_C := (*C.OCUCP_PF_Container_t)(unsafe.Pointer(&pmContainer_C.performanceContainer.choice[0]))
+					oCU_CP_PF_C := *(**C.OCUCP_PF_Container_t)(unsafe.Pointer(&pmContainer_C.performanceContainer.choice[0]))
 
 					if oCU_CP_PF_C.gNB_CU_CP_Name != nil {
 						oCU_CP_PF.GNBCUCPName = &PrintableString{}
@@ -440,7 +440,7 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 					pfContainer.Container = oCU_CP_PF
 				} else if pfContainer.ContainerType == 3 {
 					oCU_UP_PF := &OCUUPPFContainerType{}
-					oCU_UP_PF_C := (*C.OCUUP_PF_Container_t)(unsafe.Pointer(&pmContainer_C.performanceContainer.choice[0]))
+					oCU_UP_PF_C := *(**C.OCUUP_PF_Container_t)(unsafe.Pointer(&pmContainer_C.performanceContainer.choice[0]))
 
 					if oCU_UP_PF_C.gNB_CU_UP_Name != nil {
 						oCU_UP_PF.GNBCUUPName = &PrintableString{}
@@ -450,17 +450,17 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 
 					oCU_UP_PF.CUUPPFContainerItemCount = int(oCU_UP_PF_C.pf_ContainerList.list.count)
 					for j := 0; j < oCU_UP_PF.CUUPPFContainerItemCount; j++ {
-						cuUPPFContainer := oCU_UP_PF.CUUPPFContainerItems[j]
+						cuUPPFContainer := &oCU_UP_PF.CUUPPFContainerItems[j]
 						var sizeof_PF_ContainerListItem_t *C.PF_ContainerListItem_t
-						cuUPPFContainer_C := (*C.PF_ContainerListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(oCU_UP_PF_C.pf_ContainerList.list.array)) + (uintptr)(j)*unsafe.Sizeof(sizeof_PF_ContainerListItem_t)))
+						cuUPPFContainer_C := *(**C.PF_ContainerListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(oCU_UP_PF_C.pf_ContainerList.list.array)) + (uintptr)(j)*unsafe.Sizeof(sizeof_PF_ContainerListItem_t)))
 
 						cuUPPFContainer.InterfaceType = int64(cuUPPFContainer_C.interface_type)
 
 						cuUPPFContainer.OCUUPPMContainer.CUUPPlmnCount = int(cuUPPFContainer_C.o_CU_UP_PM_Container.plmnList.list.count)
 						for k := 0; k < cuUPPFContainer.OCUUPPMContainer.CUUPPlmnCount; k++ {
-							cuUPPlmn := cuUPPFContainer.OCUUPPMContainer.CUUPPlmns[k]
+							cuUPPlmn := &cuUPPFContainer.OCUUPPMContainer.CUUPPlmns[k]
 							var sizeof_PlmnID_List_t *C.PlmnID_List_t
-							cuUPPlmn_C := (*C.PlmnID_List_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(cuUPPFContainer_C.o_CU_UP_PM_Container.plmnList.list.array)) + (uintptr)(k)*unsafe.Sizeof(sizeof_PlmnID_List_t)))
+							cuUPPlmn_C := *(**C.PlmnID_List_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(cuUPPFContainer_C.o_CU_UP_PM_Container.plmnList.list.array)) + (uintptr)(k)*unsafe.Sizeof(sizeof_PlmnID_List_t)))
 
 							cuUPPlmn.PlmnID.Buf = C.GoBytes(unsafe.Pointer(cuUPPlmn_C.pLMN_Identity.buf), C.int(cuUPPlmn_C.pLMN_Identity.size))
 							cuUPPlmn.PlmnID.Size = int(cuUPPlmn_C.pLMN_Identity.size)
@@ -471,9 +471,9 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 
 								cuUPPM5GC.SliceToReportCount = int(cuUPPM5GC_C.sliceToReportList.list.count)
 								for l := 0; l < cuUPPM5GC.SliceToReportCount; l++ {
-									sliceToReport := cuUPPM5GC.SliceToReports[l]
+									sliceToReport := &cuUPPM5GC.SliceToReports[l]
 									var sizeof_SliceToReportListItem_t *C.SliceToReportListItem_t
-									sliceToReport_C := (*C.SliceToReportListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(cuUPPM5GC_C.sliceToReportList.list.array)) + (uintptr)(l)*unsafe.Sizeof(sizeof_SliceToReportListItem_t)))
+									sliceToReport_C := *(**C.SliceToReportListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(cuUPPM5GC_C.sliceToReportList.list.array)) + (uintptr)(l)*unsafe.Sizeof(sizeof_SliceToReportListItem_t)))
 
 									sliceToReport.SliceID.SST.Buf = C.GoBytes(unsafe.Pointer(sliceToReport_C.sliceID.sST.buf), C.int(sliceToReport_C.sliceID.sST.size))
 									sliceToReport.SliceID.SST.Size = int(sliceToReport_C.sliceID.sST.size)
@@ -486,9 +486,9 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 
 									sliceToReport.FQIPERSlicesPerPlmnCount = int(sliceToReport_C.fQIPERSlicesPerPlmnList.list.count)
 									for m := 0; m < sliceToReport.FQIPERSlicesPerPlmnCount; m++ {
-										fQIPerSlicesPerPlmn := sliceToReport.FQIPERSlicesPerPlmns[m]
+										fQIPerSlicesPerPlmn := &sliceToReport.FQIPERSlicesPerPlmns[m]
 										var sizeof_FQIPERSlicesPerPlmnListItem_t *C.FQIPERSlicesPerPlmnListItem_t
-										fQIPerSlicesPerPlmn_C := (*C.FQIPERSlicesPerPlmnListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(sliceToReport_C.fQIPERSlicesPerPlmnList.list.array)) + (uintptr)(m)*unsafe.Sizeof(sizeof_FQIPERSlicesPerPlmnListItem_t)))
+										fQIPerSlicesPerPlmn_C := *(**C.FQIPERSlicesPerPlmnListItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(sliceToReport_C.fQIPERSlicesPerPlmnList.list.array)) + (uintptr)(m)*unsafe.Sizeof(sizeof_FQIPERSlicesPerPlmnListItem_t)))
 
 										fQIPerSlicesPerPlmn.FiveQI = int64(fQIPerSlicesPerPlmn_C.fiveQI)
 
@@ -515,9 +515,9 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 
 								cuUPPMEPC.CUUPPMEPCPerQCIReportCount = int(cuUPPMEPC_C.perQCIReportList.list.count)
 								for l := 0; l < cuUPPMEPC.CUUPPMEPCPerQCIReportCount; l++ {
-									perQCIReport := cuUPPMEPC.CUUPPMEPCPerQCIReports[l]
+									perQCIReport := &cuUPPMEPC.CUUPPMEPCPerQCIReports[l]
 									var sizeof_PerQCIReportListItemFormat_t *C.PerQCIReportListItemFormat_t
-									perQCIReport_C := (*C.PerQCIReportListItemFormat_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(cuUPPMEPC_C.perQCIReportList.list.array)) + (uintptr)(l)*unsafe.Sizeof(sizeof_PerQCIReportListItemFormat_t)))
+									perQCIReport_C := *(**C.PerQCIReportListItemFormat_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(cuUPPMEPC_C.perQCIReportList.list.array)) + (uintptr)(l)*unsafe.Sizeof(sizeof_PerQCIReportListItemFormat_t)))
 
 									perQCIReport.QCI = int64(perQCIReport_C.qci)
 
@@ -561,14 +561,15 @@ func (c *E2sm) ParseNRCGI(nRCGI NRCGIType) (CellID string, err error) {
 	var plmnID OctetString
 	var nrCellID BitString
 
-	if plmnID.Size != 3 || nrCellID.Size != 5 {
-		return "", errors.New("Invalid input: illegal length of NRCGI")
-	}
-
 	plmnID = nRCGI.PlmnID
 	CellID, _ = c.ParsePLMNIdentity(plmnID.Buf, plmnID.Size)
 
 	nrCellID = nRCGI.NRCellID
+
+	if plmnID.Size != 3 || nrCellID.Size != 5 {
+		return "", errors.New("Invalid input: illegal length of NRCGI")
+	}
+
 	var former []uint8 = make([]uint8, 3)
 	var latter []uint8 = make([]uint8, 6)
 
