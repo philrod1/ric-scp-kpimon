@@ -380,7 +380,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 				if containerType == 1 {
 					log.Printf("oDU PF Container: ")
 
-					oDU := pmContainer.PFContainer.Container.(ODUPFContainerType)
+					oDU := pmContainer.PFContainer.Container.(*ODUPFContainerType)
 
 					cellResourceReportCount := oDU.CellResourceReportCount
 					log.Printf("CellResourceReportCount: %d", cellResourceReportCount)
@@ -469,7 +469,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 				} else if containerType == 2 {
 					log.Printf("oCU-CP PF Container: ")
 
-					oCUCP := pmContainer.PFContainer.Container.(OCUCPPFContainerType)
+					oCUCP := pmContainer.PFContainer.Container.(*OCUCPPFContainerType)
 
 					if oCUCP.GNBCUCPName != nil {
 						log.Printf("gNB-CU-CP Name: %x", oCUCP.GNBCUCPName.Buf)
@@ -479,7 +479,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 				} else if containerType == 3 {
 					log.Printf("oCU-UP PF Container: ")
 
-					oCUUP := pmContainer.PFContainer.Container.(OCUUPPFContainerType)
+					oCUUP := pmContainer.PFContainer.Container.(*OCUUPPFContainerType)
 
 					if oCUUP.GNBCUUPName != nil {
 						log.Printf("gNB-CU-UP Name: %x", oCUUP.GNBCUUPName.Buf)
