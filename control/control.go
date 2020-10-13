@@ -499,7 +499,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 						log.Printf("CU-UP Plmn Count: %d", cuUPPlmnCount)
 
 						for k := 0; k < cuUPPlmnCount; k++ {
-							log.Printf("CU-UP Plmn [%d]: ")
+							log.Printf("CU-UP Plmn [%d]: ",k)
 
 							cuUPPlmn := cuUPPFContainerItem.OCUUPPMContainer.CUUPPlmns[k]
 
@@ -582,7 +582,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 								log.Printf("PerQCIReportCount: %d", cuUPPMEPCPerQCIReportCount)
 
 								for l := 0; l < cuUPPMEPCPerQCIReportCount; l++ {
-									log.Printf("PerQCIReport[%d]: ")
+									log.Printf("PerQCIReport[%d]: ",l)
 
 									cuUPPMEPCPerQCIReport := cuUPPlmn.CUUPPMEPC.CUUPPMEPCPerQCIReports[l]
 
