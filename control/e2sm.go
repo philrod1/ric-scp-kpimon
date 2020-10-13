@@ -761,14 +761,15 @@ func (c *E2sm) ParseNRCGI(nRCGI NRCGIType) (CellID string, err error) {
 	var plmnID OctetString
 	var nrCellID BitString
 
-	if plmnID.Size != 3 || nrCellID.Size != 5 {
-		return "", errors.New("Invalid input: illegal length of NRCGI")
-	}
-
 	plmnID = nRCGI.PlmnID
 	CellID, _ = c.ParsePLMNIdentity(plmnID.Buf, plmnID.Size)
 
 	nrCellID = nRCGI.NRCellID
+
+	if plmnID.Size != 3 || nrCellID.Size != 5 {
+		return "", errors.New("Invalid input: illegal length of NRCGI")
+	}
+
 	var former []uint8 = make([]uint8, 3)
 	var latter []uint8 = make([]uint8, 6)
 
