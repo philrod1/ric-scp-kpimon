@@ -1,4 +1,4 @@
-FROM nexus3.o-ran-sc.org:10004/o-ran-sc/bldr-ubuntu18-c-go:8-u18.04 as kpimonbuild
+FROM nexus3.o-ran-sc.org:10004/o-ran-sc/bldr-ubuntu20-c-go:1.0.0 as kpimonbuild
 
 ENV PATH $PATH:/usr/local/bin
 ENV GOPATH /go
@@ -16,9 +16,10 @@ RUN rm -f rmr_${RMRVERSION}_amd64.deb rmr-dev_${RMRVERSION}_amd64.deb
 
 ARG XAPPFRAMEVERSION=v0.4.11
 WORKDIR /go/src/gerrit.o-ran-sc.org/r/ric-plt
+# RUN git clone "https://gerrit.o-ran-sc.org/r/ric-plt/sdlgo"
 RUN git clone -b ${XAPPFRAMEVERSION} "https://gerrit.o-ran-sc.org/r/ric-plt/xapp-frame"
 RUN cd xapp-frame && \
-    GO111MODULE=on go mod vendor -v && \
+   GO111MODULE=on go mod vendor -v && \
     cp -r vendor/* /go/src/ && \
     rm -rf vendor
 
@@ -51,10 +52,10 @@ WORKDIR /go/src/gerrit.o-ran-sc.org/r/scp/ric-app/kpimon
 
 RUN mkdir pkg
 
+RUN go env -w GO111MODULE=off
 RUN go build ./cmd/kpimon.go && pwd && ls -lat
 
-
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 COPY --from=kpimonbuild /usr/local/lib /usr/local/lib
 COPY --from=kpimonbuild /usr/local/include/e2ap/*.h /usr/local/include/e2ap/
 COPY --from=kpimonbuild /usr/local/include/e2sm/*.h /usr/local/include/e2sm/
