@@ -141,11 +141,6 @@ type IndicationHeaderFormat1 struct {
 	SliceID             *SliceIDType
 	FiveQI              int64
 	Qci                 int64
-	UeMessageType       int32
-	GnbDUID             *Integer
-	GnbNameType         int32
-	GnbName             interface{}
-	GlobalgNBID         *GlobalgNBIDType
 }
 
 type IndicationHeader struct {
@@ -346,13 +341,6 @@ type CellMetricsEntry struct {
 	MeasTimestampPRB       Timestamp `json:"Meas-Timestamp-PRB"`
 	AvailPRBDL             int64     `json:"Avail-PRB-DL"`
 	AvailPRBUL             int64     `json:"Avail-PRB-UL"`
-	MeasPeriodPDCP	       int64	 `json:"Meas-Period-PDCPBytes"`
-	MeasPeriodPRB	       int64	 `json:"MeasPeriodAvailPRB"`
-	nRPlmnID               []byte    `json:"NR-PLMNID"`
-	nRCellID               []byte    `json:"NR-CellID"`
-	TotalofAvailablePRBsDL  int64   `json:"Total-Available-PRBs-DL"`
-	TotalofAvailablePRBsUL  int64   `json:"Total-Available-PRBs-UL"`
-	CellID                 string    `json:"Cell ID"`
 }
 
 type CellRFType struct {
@@ -367,26 +355,16 @@ type NeighborCellRFType struct {
 }
 
 type UeMetricsEntry struct {
-	UeID                   int64               `json:"UE ID"`
+	UeID                   string               `json:"UE ID"`
 	ServingCellID          string               `json:"Serving Cell ID"`
 	MeasTimestampPDCPBytes Timestamp            `json:"Meas-Timestamp-PDCP-Bytes"`
-	PDCPBytesDLDL            int64                `json:"PDCP-Bytes-DL"`
-	PDCPBytesULUL            int64                `json:"PDCP-Bytes-UL"`
+	PDCPBytesDL            int64                `json:"PDCP-Bytes-DL"`
+	PDCPBytesUL            int64                `json:"PDCP-Bytes-UL"`
 	MeasTimestampPRB       Timestamp            `json:"Meas-Timestamp-PRB"`
 	PRBUsageDL             int64                `json:"PRB-Usage-DL"`
 	PRBUsageUL             int64                `json:"PRB-Usage-UL"`
 	MeasTimeRF             Timestamp            `json:"Meas-Time-RF"`
 	ServingCellRF          CellRFType           `json:"Serving-Cell-RF"`
 	NeighborCellsRF        []NeighborCellRFType `json:"Neighbor-Cell-RF"`
-	QCI                    int64               `json:"QCI"`
-	FiveQI                 int64               `json:"fiveQI"`
-	CellID                 string               `json:"UE ID"`
-	MeasPeriodPRB	        int64	 `json:"MeasPeriodUEPRBUsage"`//added
-	MeasPeriodPDCP         int64                `json:"Meas-Period-PDCP"`//added
-	MeasPeriodRF           int64                `json:"Meas-Period-RF"`
-	NumberOfActiveUEs      int64                `json:"Number-of-Active-UEs"`
-	PDCPBytesDL            []byte               `json:"PDCP-Bytes-DL"`
-	PDCPBytesUL            []byte               `json:"PDCP-Bytes-UL"`
-	nRPlmnID               []byte               `json:"NR-PLMNID"`
-	nRCellID               []byte               `json:"NR-CellID"`
+	MeasPeriodPDCP         int64                `json:"Meas-Period-PDCP"`
 }

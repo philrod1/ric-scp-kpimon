@@ -1,10 +1,4 @@
-# kpimon
-KPIMON xApp for Bronze Release
+# upgraded-kpimon-xApp
+kpi1 xApp- upgraded kpimon xApp
 
-This repo is a modified version of O-RAN SC KPIMON xApp code with bugfixes from POWDER
-
-# Image Build
-
-```
-$ docker build . --tag kpimon:{TAG} --no-cache
-```
+For deployment please consider upgraded-kpimon xApp deployment instruction

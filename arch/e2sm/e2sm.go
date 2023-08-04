@@ -1,6 +1,5 @@
 /*
-==================================================================================
-  Copyright (c) 2019 AT&T Intellectual Property.
+=============================EDITED===========================================
   Copyright (c) 2019 Nokia
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +13,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-==================================================================================
+=============================EDITED============================================
 */
 
 package control
@@ -60,23 +59,16 @@ func (c *E2sm) SetActionDefinition(buffer []byte, ricStyleType int64) (newBuffer
 }
 
 func (c *E2sm) GetIndicationHeader(buffer []byte) (indHdr *IndicationHeader, err error) {
-	fmt.Println("////////////entered e2sm GetIndicationHeader")
 	cptr := unsafe.Pointer(&buffer[0])
-	//fmt.Println("/////IndicationHeader= %x",IndicationHeader)
 	indHdr = &IndicationHeader{}
-	fmt.Println("///////////E2sm////indHdr = &IndicationHeader= %x",indHdr)
 	decodedHdr := C.e2sm_decode_ric_indication_header(cptr, C.size_t(len(buffer)))
-	
-	fmt.Println("///////////E2sm////decodedHdr= %x",decodedHdr)
 	if decodedHdr == nil {
 		return indHdr, errors.New("e2sm wrapper is unable to get IndicationHeader due to wrong or invalid input")
 	}
 	defer C.e2sm_free_ric_indication_header(decodedHdr)
 
 	indHdr.IndHdrType = int32(decodedHdr.present)
-	fmt.Println("////indHdr.IndHdrType= %", indHdr.IndHdrType)
 	if indHdr.IndHdrType == 1 {
-		fmt.Println("////entered indHdr.IndHdrType= 1")
 		indHdrFormat1 := &IndicationHeaderFormat1{}
 		indHdrFormat1_C := *(**C.E2SM_KPM_IndicationHeader_Format1_t)(unsafe.Pointer(&decodedHdr.choice[0]))
 
@@ -84,7 +76,6 @@ func (c *E2sm) GetIndicationHeader(buffer []byte) (indHdr *IndicationHeader, err
 			globalKPMnodeID_C := (*C.GlobalKPMnode_ID_t)(indHdrFormat1_C.id_GlobalKPMnode_ID)
 
 			indHdrFormat1.GlobalKPMnodeIDType = int32(globalKPMnodeID_C.present)
-			fmt.Println("////indHdrFormat1.GlobalKPMnodeIDType= %",indHdrFormat1.GlobalKPMnodeIDType)
 			if indHdrFormat1.GlobalKPMnodeIDType == 1 {
 				globalgNBID := &GlobalKPMnodegNBIDType{}
 				globalgNBID_C := (*C.GlobalKPMnode_gNB_ID_t)(unsafe.Pointer(&globalKPMnodeID_C.choice[0]))
@@ -104,7 +95,6 @@ func (c *E2sm) GetIndicationHeader(buffer []byte) (indHdr *IndicationHeader, err
 					gNBID.BitsUnused = int(gNBID_C.bits_unused)
 
 					globalgNBID.GlobalgNBID.GnbID = gNBID
-					fmt.Println("///in type 1 globalgNBID.GlobalgNBID.GnbID = gNBID= %", globalgNBID.GlobalgNBID.GnbID)
 				}
 
 				if globalgNBID_C.gNB_CU_UP_ID != nil {
@@ -120,9 +110,7 @@ func (c *E2sm) GetIndicationHeader(buffer []byte) (indHdr *IndicationHeader, err
 				}
 
 				indHdrFormat1.GlobalKPMnodeID = globalgNBID
-				fmt.Println("///in type 1 indHdrFormat1.GlobalKPMnodeID = globalgNBID= %", indHdrFormat1.GlobalKPMnodeID)
 			} else if indHdrFormat1.GlobalKPMnodeIDType == 2 {
-				fmt.Println("////entered else if type 2///")
 				globalengNBID := &GlobalKPMnodeengNBIDType{}
 				globalengNBID_C := (*C.GlobalKPMnode_en_gNB_ID_t)(unsafe.Pointer(&globalKPMnodeID_C.choice[0]))
 
@@ -141,13 +129,10 @@ func (c *E2sm) GetIndicationHeader(buffer []byte) (indHdr *IndicationHeader, err
 					engNBID.BitsUnused = int(engNBID_C.bits_unused)
 
 					globalengNBID.GnbID = engNBID
-					fmt.Println("///in type 2 globalengNBID.GnbID = engNBID= %", globalengNBID.GnbID)
 				}
 
 				indHdrFormat1.GlobalKPMnodeID = globalengNBID
-				fmt.Println("///in type 2 indHdrFormat1.GlobalKPMnodeID = globalengNBID= %", indHdrFormat1.GlobalKPMnodeID )
 			} else if indHdrFormat1.GlobalKPMnodeIDType == 3 {
-				fmt.Println("////entered else if type 3///")
 				globalngeNBID := &GlobalKPMnodengeNBIDType{}
 				globalngeNBID_C := (*C.GlobalKPMnode_ng_eNB_ID_t)(unsafe.Pointer(&globalKPMnodeID_C.choice[0]))
 
@@ -184,13 +169,10 @@ func (c *E2sm) GetIndicationHeader(buffer []byte) (indHdr *IndicationHeader, err
 					ngeNBID.BitsUnused = int(ngeNBID_C.bits_unused)
 
 					globalngeNBID.EnbID = ngeNBID
-					fmt.Println("///in type 3 globalngeNBID.EnbID = ngeNBID= %", globalngeNBID.EnbID)
 				}
 
 				indHdrFormat1.GlobalKPMnodeID = globalngeNBID
-				fmt.Println("///in type 3 indHdrFormat1.GlobalKPMnodeID = globalngeNBID= %", indHdrFormat1.GlobalKPMnodeID)
 			} else if indHdrFormat1.GlobalKPMnodeIDType == 4 {
-				fmt.Println("////entered else if type 4///")
 				globaleNBID := &GlobalKPMnodeeNBIDType{}
 				globaleNBID_C := (*C.GlobalKPMnode_eNB_ID_t)(unsafe.Pointer(&globalKPMnodeID_C.choice[0]))
 
@@ -236,14 +218,11 @@ func (c *E2sm) GetIndicationHeader(buffer []byte) (indHdr *IndicationHeader, err
 					eNBID.BitsUnused = int(eNBID_C.bits_unused)
 
 					globaleNBID.EnbID = eNBID
-					fmt.Println("///in type 4 globaleNBID.EnbID = ngeNBID= %", globaleNBID.EnbID)
 				}
 
 				indHdrFormat1.GlobalKPMnodeID = globaleNBID
-				fmt.Println("///in type 4 indHdrFormat1.GlobalKPMnodeID = globaleNBID= %", indHdrFormat1.GlobalKPMnodeID)
 			}
 		} else {
-			fmt.Println("/// entered else indHdrFormat1.GlobalKPMnodeIDType = 0")
 			indHdrFormat1.GlobalKPMnodeIDType = 0
 		}
 
@@ -282,23 +261,85 @@ func (c *E2sm) GetIndicationHeader(buffer []byte) (indHdr *IndicationHeader, err
 				indHdrFormat1.SliceID.SD.Size = int(sD.size)
 			}
 		}
-		fmt.Println("////before if ! nil indHdrFormat1.FiveQI = %", indHdrFormat1.FiveQI)
 
 		if indHdrFormat1_C.fiveQI != nil {
 			indHdrFormat1.FiveQI = *(*int64)(unsafe.Pointer(indHdrFormat1_C.fiveQI))
 		} else {
 			indHdrFormat1.FiveQI = -1
 		}
-		fmt.Println("////before if ! nil indHdrFormat1_C.qci= %", indHdrFormat1_C.qci)
 
 		if indHdrFormat1_C.qci != nil {
 			indHdrFormat1.Qci = *(*int64)(unsafe.Pointer(indHdrFormat1_C.qci))
 		} else {
 			indHdrFormat1.Qci = -1
 		}
+///////------Added from E2SM V2--------////////////////START/////////////////
+				if indHdrFormat1_C.message_Type != nil {
+			indHdrFormat1.UeMessageType = int32(*indHdrFormat1_C.message_Type)
+		} else {
+			indHdrFormat1.UeMessageType = -1
+		}
 
+		if indHdrFormat1_C.gNB_DU_ID != nil {
+			indHdrFormat1.GnbDUID = &Integer{}
+
+			indHdrFormat1.GnbDUID.Buf = C.GoBytes(unsafe.Pointer(indHdrFormat1_C.gNB_DU_ID.buf), C.int(indHdrFormat1_C.gNB_DU_ID.size))
+			indHdrFormat1.GnbDUID.Size = int(indHdrFormat1_C.gNB_DU_ID.size)
+		}
+
+		if indHdrFormat1_C.gNB_Name != nil {
+			indHdrFormat1.GnbNameType = int32(indHdrFormat1_C.gNB_Name.present)
+			if indHdrFormat1.GnbNameType == 1 {
+				gNBName := &GNB_DU_Name{}
+				gNBName_C := (*C.GNB_DU_Name_t)(unsafe.Pointer(&indHdrFormat1_C.gNB_Name.choice[0]))
+
+				gNBName.Buf = C.GoBytes(unsafe.Pointer(gNBName_C.buf), C.int(gNBName_C.size))
+				gNBName.Size = int(gNBName_C.size)
+
+				indHdrFormat1.GnbName = gNBName
+			} else if indHdrFormat1.GnbNameType == 2 {
+				gNBName := &GNB_CU_CP_Name{}
+				gNBName_C := (*C.GNB_CU_CP_Name_t)(unsafe.Pointer(&indHdrFormat1_C.gNB_Name.choice[0]))
+
+				gNBName.Buf = C.GoBytes(unsafe.Pointer(gNBName_C.buf), C.int(gNBName_C.size))
+				gNBName.Size = int(gNBName_C.size)
+
+				indHdrFormat1.GnbName = gNBName
+			} else if indHdrFormat1.GnbNameType == 3 {
+				gNBName := &GNB_CU_UP_Name{}
+				gNBName_C := (*C.GNB_CU_UP_Name_t)(unsafe.Pointer(&indHdrFormat1_C.gNB_Name.choice[0]))
+
+				gNBName.Buf = C.GoBytes(unsafe.Pointer(gNBName_C.buf), C.int(gNBName_C.size))
+				gNBName.Size = int(gNBName_C.size)
+
+				indHdrFormat1.GnbName = gNBName
+			}
+		} else {
+			indHdrFormat1.GnbNameType = -1
+		}
+
+		if indHdrFormat1_C.global_GNB_ID != nil {
+			indHdrFormat1.GlobalgNBID = &GlobalgNBIDType{}
+
+			plmnID_C := indHdrFormat1_C.global_GNB_ID.plmn_id
+			indHdrFormat1.GlobalgNBID.PlmnID.Buf = C.GoBytes(unsafe.Pointer(plmnID_C.buf), C.int(plmnID_C.size))
+			indHdrFormat1.GlobalgNBID.PlmnID.Size = int(plmnID_C.size)
+
+			globalgNBID_gNBID_C := indHdrFormat1_C.global_GNB_ID.gnb_id
+			indHdrFormat1.GlobalgNBID.GnbIDType = int(globalgNBID_gNBID_C.present)
+			if indHdrFormat1.GlobalgNBID.GnbIDType == 1 {
+				gNBID := &GNBID{}
+				gNBID_C := (*C.BIT_STRING_t)(unsafe.Pointer(&globalgNBID_gNBID_C.choice[0]))
+
+				gNBID.Buf = C.GoBytes(unsafe.Pointer(gNBID_C.buf), C.int(gNBID_C.size))
+				gNBID.Size = int(gNBID_C.size)
+				gNBID.BitsUnused = int(gNBID_C.bits_unused)
+
+				indHdrFormat1.GlobalgNBID.GnbID = gNBID
+			}
+		}								  
+///////------Added from E2SM V2--------////////////////END/////////////////											 
 		indHdr.IndHdr = indHdrFormat1
-		fmt.Println("///at the end before else///indHdr.IndHdr = %", indHdr.IndHdr)
 	} else {
 		return indHdr, errors.New("Unknown RIC Indication Header type")
 	}
@@ -307,13 +348,10 @@ func (c *E2sm) GetIndicationHeader(buffer []byte) (indHdr *IndicationHeader, err
 }
 
 func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, err error) {
-	fmt.Println("////////////entered e2sm getindicationmessage")
 	cptr := unsafe.Pointer(&buffer[0])
 	indMsg = &IndicationMessage{}
-	fmt.Println("///////e2sm indMsg= IndicationMessage %x", indMsg)
 	decodedMsg := C.e2sm_decode_ric_indication_message(cptr, C.size_t(len(buffer)))
 	if decodedMsg == nil {
-		fmt.Println("/////e2sm decodeMsg == nil")
 		return indMsg, errors.New("e2sm wrapper is unable to get IndicationMessage due to wrong or invalid input")
 	}
 	defer C.e2sm_free_ric_indication_message(decodedMsg)
@@ -321,31 +359,23 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 	indMsg.StyleType = int64(decodedMsg.ric_Style_Type)
 
 	indMsg.IndMsgType = int32(decodedMsg.indicationMessage.present)
-	fmt.Println("///////e2sm indMsg.IndMsgType %x", indMsg.IndMsgType)
 
 	if indMsg.IndMsgType == 1 {
-		fmt.Println("////////////entered e2sm if indMsg.IndMsgType == 1")
 		indMsgFormat1 := &IndicationMessageFormat1{}
 		indMsgFormat1_C := *(**C.E2SM_KPM_IndicationMessage_Format1_t)(unsafe.Pointer(&decodedMsg.indicationMessage.choice[0]))
 
 		indMsgFormat1.PMContainerCount = int(indMsgFormat1_C.pm_Containers.list.count)
 		for i := 0; i < indMsgFormat1.PMContainerCount; i++ {
-			fmt.Println("---------------e2sm 1st for loop i= %d", i)
 			pmContainer := &indMsgFormat1.PMContainers[i]
-			fmt.Println("////////////e2sm pmContainer= &indMsgFormat1.PMContainers i %x", pmContainer)
 			var sizeof_PM_Containers_List_t *C.PM_Containers_List_t
 			pmContainer_C := *(**C.PM_Containers_List_t)(unsafe.Pointer(uintptr(unsafe.Pointer(indMsgFormat1_C.pm_Containers.list.array)) + (uintptr)(i)*unsafe.Sizeof(sizeof_PM_Containers_List_t)))
-			fmt.Println("////////////e2sm pmContainer= %x", pmContainer_C)
 
 			if pmContainer_C.performanceContainer != nil {
-				fmt.Println("////////////entered e2sm if pmContainer_C.performanceContainer != nil")
 				pfContainer := &PFContainerType{}
 
 				pfContainer.ContainerType = int32(pmContainer_C.performanceContainer.present)
-				fmt.Println("///e2sm pfContainer.ContainerType %d", pfContainer.ContainerType)
 
 				if pfContainer.ContainerType == 1 {
-					fmt.Println("////////////entered e2sm if pfContainer.ContainerType == 1")
 					oDU_PF := &ODUPFContainerType{}
 					oDU_PF_C := *(**C.ODU_PF_Container_t)(unsafe.Pointer(&pmContainer_C.performanceContainer.choice[0]))
 
@@ -458,9 +488,7 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 					}
 
 					pfContainer.Container = oDU_PF
-					//fmt.Println("//// e2sm in type1 pfContainer.Container= oDU_PF %x", pfContainer.Container)
 				} else if pfContainer.ContainerType == 2 {
-					fmt.Println("//////e2sm if pfContainer.ContainerType == 2")
 					oCU_CP_PF := &OCUCPPFContainerType{}
 					oCU_CP_PF_C := *(**C.OCUCP_PF_Container_t)(unsafe.Pointer(&pmContainer_C.performanceContainer.choice[0]))
 
@@ -475,9 +503,7 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 					}
 
 					pfContainer.Container = oCU_CP_PF
-					fmt.Println("//// e2sm in type2 pfContainer.Container = oCU_CP_PF %x", pfContainer.Container)
 				} else if pfContainer.ContainerType == 3 {
-					fmt.Println("///////entered e2sm pfcontainer type ==3")
 					oCU_UP_PF := &OCUUPPFContainerType{}
 					oCU_UP_PF_C := *(**C.OCUUP_PF_Container_t)(unsafe.Pointer(&pmContainer_C.performanceContainer.choice[0]))
 
@@ -579,22 +605,155 @@ func (c *E2sm) GetIndicationMessage(buffer []byte) (indMsg *IndicationMessage, e
 					}
 
 					pfContainer.Container = oCU_UP_PF
-					fmt.Println("//// e2sm in type3 pfContainer.Container= oCU_UP_PF %x", pfContainer.Container)
 				} else {
-					fmt.Println("//////e2sm in else Unknown PF Container type indMsg %x", indMsg)
 					return indMsg, errors.New("Unknown PF Container type")
 				}
 
 				pmContainer.PFContainer = pfContainer
-				fmt.Println("/////e2sm after else pmContainer.PFContainer = pfContainer %x", pmContainer.PFContainer)
 			}
+///////------Added from E2SM V2--------////////////////START/////////////////
+						if pmContainer_C.theRANContainer != nil {
+				ranContainer := &RANContainerType{}
 
+				ranContainer.Timestamp.Buf = C.GoBytes(unsafe.Pointer(pmContainer_C.theRANContainer.timestamp.buf), C.int(pmContainer_C.theRANContainer.timestamp.size))
+				ranContainer.Timestamp.Size = int(pmContainer_C.theRANContainer.timestamp.size)
+
+				ranContainer.ContainerType = int32(pmContainer_C.theRANContainer.reportContainer.present)
+
+				if ranContainer.ContainerType == 1 {
+					oDU_UE := &DUUsageReportType{}
+					oDU_UE_C := *(**C.DU_Usage_Report_Per_UE_t)(unsafe.Pointer(&pmContainer_C.theRANContainer.reportContainer.choice[0]))
+
+					oDU_UE.CellResourceReportItemCount = int(oDU_UE_C.cellResourceReportList.list.count)
+					for j := 0; j < oDU_UE.CellResourceReportItemCount; j++ {
+						cellResourceReport := &oDU_UE.CellResourceReportItems[j]
+						var sizeof_DU_Usage_Report_CellResourceReportItem_t *C.DU_Usage_Report_CellResourceReportItem_t
+						cellResourceReport_C := *(**C.DU_Usage_Report_CellResourceReportItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(oDU_UE_C.cellResourceReportList.list.array)) + (uintptr)(j)*unsafe.Sizeof(sizeof_DU_Usage_Report_CellResourceReportItem_t)))
+
+						cellResourceReport.NRCGI.PlmnID.Buf = C.GoBytes(unsafe.Pointer(cellResourceReport_C.nRCGI.pLMN_Identity.buf), C.int(cellResourceReport_C.nRCGI.pLMN_Identity.size))
+						cellResourceReport.NRCGI.PlmnID.Size = int(cellResourceReport_C.nRCGI.pLMN_Identity.size)
+
+						cellResourceReport.NRCGI.NRCellID.Buf = C.GoBytes(unsafe.Pointer(cellResourceReport_C.nRCGI.nRCellIdentity.buf), C.int(cellResourceReport_C.nRCGI.nRCellIdentity.size))
+						cellResourceReport.NRCGI.NRCellID.Size = int(cellResourceReport_C.nRCGI.nRCellIdentity.size)
+						cellResourceReport.NRCGI.NRCellID.BitsUnused = int(cellResourceReport_C.nRCGI.nRCellIdentity.bits_unused)
+
+						cellResourceReport.UeResourceReportItemCount = int(cellResourceReport_C.ueResourceReportList.list.count)
+						for k := 0; k < cellResourceReport.UeResourceReportItemCount; k++ {
+							ueResourceReport := &cellResourceReport.UeResourceReportItems[k]
+							var sizeof_DU_Usage_Report_UeResourceReportItem_t *C.DU_Usage_Report_UeResourceReportItem_t
+							ueResourceReport_C := *(**C.DU_Usage_Report_UeResourceReportItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(cellResourceReport_C.ueResourceReportList.list.array)) + (uintptr)(k)*unsafe.Sizeof(sizeof_DU_Usage_Report_UeResourceReportItem_t)))
+
+							ueResourceReport.CRNTI.Buf = C.GoBytes(unsafe.Pointer(ueResourceReport_C.c_RNTI.buf), C.int(ueResourceReport_C.c_RNTI.size))
+							ueResourceReport.CRNTI.Size = int(ueResourceReport_C.c_RNTI.size)
+
+							if ueResourceReport_C.dl_PRBUsage != nil {
+								ueResourceReport.PRBUsageDL = int64(*ueResourceReport_C.dl_PRBUsage)
+							} else {
+								ueResourceReport.PRBUsageDL = -1
+							}
+
+							if ueResourceReport_C.ul_PRBUsage != nil {
+								ueResourceReport.PRBUsageUL = int64(*ueResourceReport_C.ul_PRBUsage)
+							} else {
+								ueResourceReport.PRBUsageUL = -1
+							}
+						}
+					}
+
+					ranContainer.Container = oDU_UE
+				} else if ranContainer.ContainerType == 2 {
+					oCU_CP_UE := &CUCPUsageReportType{}
+					oCU_CP_UE_C := *(**C.CU_CP_Usage_Report_Per_UE_t)(unsafe.Pointer(&pmContainer_C.theRANContainer.reportContainer.choice[0]))
+
+					oCU_CP_UE.CellResourceReportItemCount = int(oCU_CP_UE_C.cellResourceReportList.list.count)
+					for j := 0; j < oCU_CP_UE.CellResourceReportItemCount; j++ {
+						cellResourceReport := &oCU_CP_UE.CellResourceReportItems[j]
+						var sizeof_CU_CP_Usage_Report_CellResourceReportItem_t *C.CU_CP_Usage_Report_CellResourceReportItem_t
+						cellResourceReport_C := *(**C.CU_CP_Usage_Report_CellResourceReportItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(oCU_CP_UE_C.cellResourceReportList.list.array)) + (uintptr)(j)*unsafe.Sizeof(sizeof_CU_CP_Usage_Report_CellResourceReportItem_t)))
+
+						cellResourceReport.NRCGI.PlmnID.Buf = C.GoBytes(unsafe.Pointer(cellResourceReport_C.nRCGI.pLMN_Identity.buf), C.int(cellResourceReport_C.nRCGI.pLMN_Identity.size))
+						cellResourceReport.NRCGI.PlmnID.Size = int(cellResourceReport_C.nRCGI.pLMN_Identity.size)
+
+						cellResourceReport.NRCGI.NRCellID.Buf = C.GoBytes(unsafe.Pointer(cellResourceReport_C.nRCGI.nRCellIdentity.buf), C.int(cellResourceReport_C.nRCGI.nRCellIdentity.size))
+						cellResourceReport.NRCGI.NRCellID.Size = int(cellResourceReport_C.nRCGI.nRCellIdentity.size)
+						cellResourceReport.NRCGI.NRCellID.BitsUnused = int(cellResourceReport_C.nRCGI.nRCellIdentity.bits_unused)
+
+						cellResourceReport.UeResourceReportItemCount = int(cellResourceReport_C.ueResourceReportList.list.count)
+						for k := 0; k < cellResourceReport.UeResourceReportItemCount; k++ {
+							ueResourceReport := &cellResourceReport.UeResourceReportItems[k]
+							var sizeof_CU_CP_Usage_Report_UeResourceReportItem_t *C.CU_CP_Usage_Report_UeResourceReportItem_t
+							ueResourceReport_C := *(**C.CU_CP_Usage_Report_UeResourceReportItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(cellResourceReport_C.ueResourceReportList.list.array)) + (uintptr)(k)*unsafe.Sizeof(sizeof_CU_CP_Usage_Report_UeResourceReportItem_t)))
+
+							ueResourceReport.CRNTI.Buf = C.GoBytes(unsafe.Pointer(ueResourceReport_C.c_RNTI.buf), C.int(ueResourceReport_C.c_RNTI.size))
+							ueResourceReport.CRNTI.Size = int(ueResourceReport_C.c_RNTI.size)
+
+							if ueResourceReport_C.serving_Cell_RF_Type != nil {
+								ueResourceReport.ServingCellRF = &OctetString{}
+								ueResourceReport.ServingCellRF.Buf = C.GoBytes(unsafe.Pointer(ueResourceReport_C.serving_Cell_RF_Type.buf), C.int(ueResourceReport_C.serving_Cell_RF_Type.size))
+								ueResourceReport.ServingCellRF.Size = int(ueResourceReport_C.serving_Cell_RF_Type.size)
+							}
+
+							if ueResourceReport_C.neighbor_Cell_RF != nil {
+								ueResourceReport.NeighborCellRF = &OctetString{}
+								ueResourceReport.NeighborCellRF.Buf = C.GoBytes(unsafe.Pointer(ueResourceReport_C.neighbor_Cell_RF.buf), C.int(ueResourceReport_C.neighbor_Cell_RF.size))
+								ueResourceReport.NeighborCellRF.Size = int(ueResourceReport_C.neighbor_Cell_RF.size)
+							}
+						}
+					}
+
+					ranContainer.Container = oCU_CP_UE
+				} else if ranContainer.ContainerType == 3 {
+					oCU_UP_UE := &CUUPUsageReportType{}
+					oCU_UP_UE_C := *(**C.CU_UP_Usage_Report_Per_UE_t)(unsafe.Pointer(&pmContainer_C.theRANContainer.reportContainer.choice[0]))
+
+					oCU_UP_UE.CellResourceReportItemCount = int(oCU_UP_UE_C.cellResourceReportList.list.count)
+					for j := 0; j < oCU_UP_UE.CellResourceReportItemCount; j++ {
+						cellResourceReport := &oCU_UP_UE.CellResourceReportItems[j]
+						var sizeof_CU_UP_Usage_Report_CellResourceReportItem_t *C.CU_UP_Usage_Report_CellResourceReportItem_t
+						cellResourceReport_C := *(**C.CU_UP_Usage_Report_CellResourceReportItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(oCU_UP_UE_C.cellResourceReportList.list.array)) + (uintptr)(j)*unsafe.Sizeof(sizeof_CU_UP_Usage_Report_CellResourceReportItem_t)))
+
+						cellResourceReport.NRCGI.PlmnID.Buf = C.GoBytes(unsafe.Pointer(cellResourceReport_C.nRCGI.pLMN_Identity.buf), C.int(cellResourceReport_C.nRCGI.pLMN_Identity.size))
+						cellResourceReport.NRCGI.PlmnID.Size = int(cellResourceReport_C.nRCGI.pLMN_Identity.size)
+
+						cellResourceReport.NRCGI.NRCellID.Buf = C.GoBytes(unsafe.Pointer(cellResourceReport_C.nRCGI.nRCellIdentity.buf), C.int(cellResourceReport_C.nRCGI.nRCellIdentity.size))
+						cellResourceReport.NRCGI.NRCellID.Size = int(cellResourceReport_C.nRCGI.nRCellIdentity.size)
+						cellResourceReport.NRCGI.NRCellID.BitsUnused = int(cellResourceReport_C.nRCGI.nRCellIdentity.bits_unused)
+
+						cellResourceReport.UeResourceReportItemCount = int(cellResourceReport_C.ueResourceReportList.list.count)
+						for k := 0; k < cellResourceReport.UeResourceReportItemCount; k++ {
+							ueResourceReport := &cellResourceReport.UeResourceReportItems[k]
+							var sizeof_CU_UP_Usage_Report_UeResourceReportItem_t *C.CU_UP_Usage_Report_UeResourceReportItem_t
+							ueResourceReport_C := *(**C.CU_UP_Usage_Report_UeResourceReportItem_t)(unsafe.Pointer((uintptr)(unsafe.Pointer(cellResourceReport_C.ueResourceReportList.list.array)) + (uintptr)(k)*unsafe.Sizeof(sizeof_CU_UP_Usage_Report_UeResourceReportItem_t)))
+
+							ueResourceReport.CRNTI.Buf = C.GoBytes(unsafe.Pointer(ueResourceReport_C.c_RNTI.buf), C.int(ueResourceReport_C.c_RNTI.size))
+							ueResourceReport.CRNTI.Size = int(ueResourceReport_C.c_RNTI.size)
+
+							if ueResourceReport_C.pDCPBytesDL != nil {
+								ueResourceReport.PDCPBytesDL = &Integer{}
+								ueResourceReport.PDCPBytesDL.Buf = C.GoBytes(unsafe.Pointer(ueResourceReport_C.pDCPBytesDL.buf), C.int(ueResourceReport_C.pDCPBytesDL.size))
+								ueResourceReport.PDCPBytesDL.Size = int(ueResourceReport_C.pDCPBytesDL.size)
+							}
+
+							if ueResourceReport_C.pDCPBytesUL != nil {
+								ueResourceReport.PDCPBytesUL = &Integer{}
+								ueResourceReport.PDCPBytesUL.Buf = C.GoBytes(unsafe.Pointer(ueResourceReport_C.pDCPBytesUL.buf), C.int(ueResourceReport_C.pDCPBytesUL.size))
+								ueResourceReport.PDCPBytesUL.Size = int(ueResourceReport_C.pDCPBytesUL.size)
+							}
+						}
+					}
+
+					ranContainer.Container = oCU_UP_UE
+				} else {
+					return indMsg, errors.New("Unknown RAN Container type")
+				}
+
+				pmContainer.RANContainer = ranContainer
+			}								
+///////------Added from E2SM V2--------////////////////END/////////////////					   
 		}
 
 		indMsg.IndMsg = indMsgFormat1
-		fmt.Println("/////e2sm before second else indMsg.IndMsg = indMsgFormat1 %x", indMsg.IndMsg)
 	} else {
-		fmt.Println("//////e2sm in second else Unknown PF Container type indMsg %x", indMsg)
 		return indMsg, errors.New("Unknown RIC Indication Message Format")
 	}
 
@@ -605,19 +764,10 @@ func (c *E2sm) ParseNRCGI(nRCGI NRCGIType) (CellID string, err error) {
 	var plmnID OctetString
 	var nrCellID BitString
 
-	//plmnID = nRCGI.PlmnID
-	//CellID, _ = c.ParsePLMNIdentity(plmnID.Buf, plmnID.Size)
-	
 	plmnID = nRCGI.PlmnID
-	fmt.Println("plmnID = nRCGI.PlmnID in e2sm parsenrcgi func: %d", plmnID)
 	CellID, _ = c.ParsePLMNIdentity(plmnID.Buf, plmnID.Size)
-	fmt.Println("CellID in e2sm parsenrcgi func: %d", CellID)
 
 	nrCellID = nRCGI.NRCellID
-	fmt.Println("nrCellID = nRCGI.NRCellID in e2sm parsenrcgi func:", nrCellID)
-	
-	fmt.Println("plmnID.Size= %d", plmnID.Size)
-	fmt.Println("nrCellID.Size= %d", nrCellID.Size)
 
 	if plmnID.Size != 3 || nrCellID.Size != 5 {
 		return "", errors.New("Invalid input: illegal length of NRCGI")
@@ -637,15 +787,12 @@ func (c *E2sm) ParseNRCGI(nRCGI NRCGIType) (CellID string, err error) {
 	latter[5] = nrCellID.Buf[4] >> uint(nrCellID.BitsUnused)
 
 	CellID = CellID + strconv.Itoa(int(former[0])) + strconv.Itoa(int(former[1])) + strconv.Itoa(int(former[2])) + strconv.Itoa(int(latter[0])) + strconv.Itoa(int(latter[1])) + strconv.Itoa(int(latter[2])) + strconv.Itoa(int(latter[3])) + strconv.Itoa(int(latter[4])) + strconv.Itoa(int(latter[5]))
-	
-	fmt.Println("CellID at the end of parsenrcgi func in e2sm: %d", CellID)
 
 	return
 }
 
 func (c *E2sm) ParsePLMNIdentity(buffer []byte, size int) (PlmnID string, err error) {
 	if size != 3 {
-		fmt.Println("////e2sm entered ParsePLMNIdentity if size != 3")
 		return "", errors.New("Invalid input: illegal length of PlmnID")
 	}
 

@@ -1,4 +1,4 @@
-FROM nexus3.o-ran-sc.org:10002/o-ran-sc/bldr-ubuntu20-c-go:1.0.0 as kpimonbuild
+FROM nexus3.o-ran-sc.org:10004/o-ran-sc/bldr-ubuntu20-c-go:1.1.1 as kpimonbuild
 
 ENV PATH $PATH:/usr/local/bin
 ENV GOPATH /go
@@ -7,12 +7,20 @@ ENV RMR_SEED_RT /opt/routes.txt
 
 COPY routes.txt /opt/routes.txt
 
-ARG RMRVERSION=4.0.2
-ARG RMRLIBURL=https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr_${RMRVERSION}_amd64.deb/download.deb
-ARG RMRDEVURL=https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr-dev_${RMRVERSION}_amd64.deb/download.deb
-RUN wget --content-disposition ${RMRLIBURL} && dpkg -i rmr_${RMRVERSION}_amd64.deb
-RUN wget --content-disposition ${RMRDEVURL} && dpkg -i rmr-dev_${RMRVERSION}_amd64.deb
-RUN rm -f rmr_${RMRVERSION}_amd64.deb rmr-dev_${RMRVERSION}_amd64.deb
+#ARG RMRVERSION=4.0.2
+#ARG RMRLIBURL=https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr_${RMRVERSION}_amd64.deb/download.deb
+#ARG RMRDEVURL=https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr-dev_${RMRVERSION}_amd64.deb/download.deb
+#RUN wget --content-disposition ${RMRLIBURL} && dpkg -i rmr_${RMRVERSION}_amd64.deb
+#RUN wget --content-disposition ${RMRDEVURL} && dpkg -i rmr-dev_${RMRVERSION}_amd64.deb
+#RUN rm -f rmr_${RMRVERSION}_amd64.deb rmr-dev_${RMRVERSION}_amd64.deb
+
+
+RUN wget -nv --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr-dev_4.0.5_amd64.deb/download.deb
+RUN dpkg -i rmr-dev_4.0.5_amd64.deb
+
+# Install RMR client
+RUN apt-get update && \
+    apt-get -y install gcc
 
 ARG XAPPFRAMEVERSION=v0.4.11
 WORKDIR /go/src/gerrit.o-ran-sc.org/r/ric-plt
@@ -25,9 +33,10 @@ RUN cd xapp-frame && \
 
 WORKDIR /go/src/gerrit.o-ran-sc.org/r/scp/ric-app/kpimon
 COPY control/ control/
-COPY cmd/ cmd/
+COPY cmd/kpimon.go ./kpimon.go
 COPY e2ap/ e2ap/
 COPY e2sm/ e2sm/
+COPY ./go.mod ./go.mod
 
 # "COMPILING E2AP Wrapper"
 # -DASN_EMIT_DEBUG=1
@@ -50,10 +59,24 @@ RUN cd e2sm && \
 
 WORKDIR /go/src/gerrit.o-ran-sc.org/r/scp/ric-app/kpimon
 
+COPY control/ control/
+COPY cmd/kpimon.go ./kpimon.go
+COPY ./go.mod ./go.mod
+
+
+RUN wget -nv --no-check-certificate https://dl.google.com/go/go1.18.linux-amd64.tar.gz \
+     && tar -xf go1.18.linux-amd64.tar.gz \
+     && rm -f go*.gz
+
+ENV DEFAULTPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PATH=$DEFAULTPATH:/usr/local/go/bin:/go/src/gerrit.o-ran-sc.org/r/scp/ric-app/kpimon/go/bin:/root/go/bin
+
+COPY go.sum go.sum
+
 RUN mkdir pkg
 
-RUN go env -w GO111MODULE=off
-RUN go build ./cmd/kpimon.go && pwd && ls -lat
+#RUN go env -w GO111MODULE=off
+RUN go build ./kpimon.go && pwd && ls -lat
 
 FROM ubuntu:20.04
 COPY --from=kpimonbuild /usr/local/lib /usr/local/lib
