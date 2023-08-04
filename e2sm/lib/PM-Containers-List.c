@@ -8,7 +8,6 @@
 #include "PM-Containers-List.h"
 
 #include "PF-Container.h"
-#include "RAN-Container.h"
 asn_TYPE_member_t asn_MBR_PM_Containers_List_1[] = {
 	{ ATF_POINTER, 2, offsetof(struct PM_Containers_List, performanceContainer),
 		(ASN_TAG_CLASS_CONTEXT | (0 << 2)),

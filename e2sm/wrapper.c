@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <stdlib.h>
 #include "wrapper.h"
 
 ssize_t e2sm_encode_ric_event_trigger_definition(void *buffer, size_t buf_size, size_t event_trigger_count, long *RT_periods) {
@@ -64,13 +65,15 @@ ssize_t e2sm_encode_ric_action_definition(void *buffer, size_t buf_size, long ri
 
 E2SM_KPM_IndicationHeader_t* e2sm_decode_ric_indication_header(void *buffer, size_t buf_size) {
 	asn_dec_rval_t decode_result;
-    E2SM_KPM_IndicationHeader_t *indHdr = 0;
+    E2SM_KPM_IndicationHeader_t *indHdr;
+    indHdr = (E2SM_KPM_IndicationHeader_t *)calloc(1,sizeof(*indHdr));
     decode_result = aper_decode_complete(NULL, &asn_DEF_E2SM_KPM_IndicationHeader, (void **)&indHdr, buffer, buf_size);
     if(decode_result.code == RC_OK) {
         return indHdr;
     }
     else {
         ASN_STRUCT_FREE(asn_DEF_E2SM_KPM_IndicationHeader, indHdr);
+	free(indHdr);
         return NULL;
     }
 }
@@ -81,13 +84,15 @@ void e2sm_free_ric_indication_header(E2SM_KPM_IndicationHeader_t* indHdr) {
 
 E2SM_KPM_IndicationMessage_t* e2sm_decode_ric_indication_message(void *buffer, size_t buf_size) {
 	asn_dec_rval_t decode_result;
-    E2SM_KPM_IndicationMessage_t *indMsg = 0;
+    E2SM_KPM_IndicationMessage_t *indMsg;
+    indMsg = (E2SM_KPM_IndicationMessage_t *)calloc(1,sizeof(*indMsg));
     decode_result = aper_decode_complete(NULL, &asn_DEF_E2SM_KPM_IndicationMessage, (void **)&indMsg, buffer, buf_size);
     if(decode_result.code == RC_OK) {
     	return indMsg;
     }
     else {
         ASN_STRUCT_FREE(asn_DEF_E2SM_KPM_IndicationMessage, indMsg);
+	free(indMsg);
         return NULL;
     }
 }

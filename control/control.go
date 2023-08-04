@@ -1,28 +1,34 @@
 package control
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"gerrit.o-ran-sc.org/r/ric-plt/xapp-frame/pkg/xapp"
-	"github.com/go-redis/redis"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"gerrit.o-ran-sc.org/r/ric-plt/xapp-frame/pkg/xapp"
+	influxdb2 "github.com/influxdata/influxdb-client-go"
 )
 
 type Control struct {
-	ranList []string //nodeB list
-	eventCreateExpired int32 //maximum time for the RIC Subscription Request event creation procedure in the E2 Node
-	eventDeleteExpired int32 //maximum time for the RIC Subscription Request event deletion procedure in the E2 Node
-	rcChan                chan *xapp.RMRParams //channel for receiving rmr message
-	client                *redis.Client        //redis client
-	eventCreateExpiredMap map[string]bool      //map for recording the RIC Subscription Request event creation procedure is expired or not
-	eventDeleteExpiredMap map[string]bool      //map for recording the RIC Subscription Request event deletion procedure is expired or not
-	eventCreateExpiredMu  *sync.Mutex          //mutex for eventCreateExpiredMap
-	eventDeleteExpiredMu  *sync.Mutex          //mutex for eventDeleteExpiredMap
+	ranList            []string             //nodeB list
+	eventCreateExpired int32                //maximum time for the RIC Subscription Request event creation procedure in the E2 Node
+	eventDeleteExpired int32                //maximum time for the RIC Subscription Request event deletion procedure in the E2 Node
+	rcChan             chan *xapp.RMRParams //channel for receiving rmr message
+	//RMR    chan *xapp.RMRParams //channel for receiving rmr message
+	//client                *redis.Client        //redis client
+	client                influxdb2.Client //client for influxdb
+	eventCreateExpiredMap map[string]bool  //map for recording the RIC Subscription Request event creation procedure is expired or not
+	eventDeleteExpiredMap map[string]bool  //map for recording the RIC Subscription Request event deletion procedure is expired or not
+	eventCreateExpiredMu  *sync.Mutex      //mutex for eventCreateExpiredMap
+	eventDeleteExpiredMu  *sync.Mutex      //mutex for eventDeleteExpiredMap
 }
 
 func init() {
@@ -39,18 +45,33 @@ func init() {
 
 func NewControl() Control {
 	str := os.Getenv("ranList")
+	create_db()
 	return Control{strings.Split(str, ","),
 		5, 5,
 		make(chan *xapp.RMRParams),
-		redis.NewClient(&redis.Options{
-			Addr:     os.Getenv("redisAddr"), //"localhost:6379"
-			Password: "",
-			DB:       0,
-		}),
+		influxdb2.NewClient("http://ricplt-influxdb.ricplt:8086", "client"),
 		make(map[string]bool),
 		make(map[string]bool),
 		&sync.Mutex{},
 		&sync.Mutex{}}
+}
+
+//func NewControl() Control {
+//	create_db()
+//	return Control{
+//		make(chan *xapp.RMRParams),
+//		influxdb2.NewClient("http://ricplt-influxdb.ricplt:8086", "client"),
+//	}
+//}
+
+func create_db() {
+	//Create a database named kpimon in influxDB
+	fmt.Println("/////entered creat db func")
+	_, err := http.Post("http://ricplt-influxdb.ricplt:8086/query?q=create%20database%20kpimon", "", nil)
+	fmt.Println("////in createdb err=", err)
+	if err != nil {
+		xapp.Logger.Error("Create database failed!")
+	}
 }
 
 func ReadyCB(i interface{}) {
@@ -61,11 +82,12 @@ func ReadyCB(i interface{}) {
 }
 
 func (c *Control) Run() {
-	_, err := c.client.Ping().Result()
-	if err != nil {
-		xapp.Logger.Error("Failed to connect to Redis DB with %v", err)
-		log.Printf("Failed to connect to Redis DB with %v", err)
-	}
+	//err := c.apiClient.GetPing()
+	//_, err := c.client.Ping().Result()
+	//if err != nil {
+	//	xapp.Logger.Error("Failed to connect to Redis DB with %v", err)
+	//	log.Printf("Failed to connect to Redis DB with %v", err)
+	//}
 	if len(c.ranList) > 0 {
 		xapp.SetReadyCB(ReadyCB, c)
 		xapp.Run(c)
@@ -145,26 +167,39 @@ func (c *Control) controlLoop() {
 }
 
 func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
+	fmt.Println("////////entered hadleIndication")
 	var e2ap *E2ap
 	var e2sm *E2sm
-
+	fmt.Println("/////control in handleindication params= %", params)
+	fmt.Println("/////control in handleindication params.Payload= %", params.Payload)
 	indicationMsg, err := e2ap.GetIndicationMessage(params.Payload)
+	fmt.Println("/////indicationMsg= %", indicationMsg)
 	if err != nil {
 		xapp.Logger.Error("Failed to decode RIC Indication message: %v", err)
 		log.Printf("Failed to decode RIC Indication message: %v", err)
 		return
 	}
-
+        
 	log.Printf("RIC Indication message from {%s} received", params.Meid.RanName)
+	fmt.Println("RIC Indication message from {%s} received", params.Meid.RanName)
 	log.Printf("RequestID: %d", indicationMsg.RequestID)
+	fmt.Println("RequestID: %d", indicationMsg.RequestID)
 	log.Printf("RequestSequenceNumber: %d", indicationMsg.RequestSequenceNumber)
+	fmt.Println("RequestSequenceNumber: %d", indicationMsg.RequestSequenceNumber)
 	log.Printf("FunctionID: %d", indicationMsg.FuncID)
+	fmt.Println("FunctionID: %d", indicationMsg.FuncID)
 	log.Printf("ActionID: %d", indicationMsg.ActionID)
+	fmt.Println("ActionID: %d", indicationMsg.ActionID)
 	log.Printf("IndicationSN: %d", indicationMsg.IndSN)
+	fmt.Println("IndicationSN: %d", indicationMsg.IndSN)
 	log.Printf("IndicationType: %d", indicationMsg.IndType)
+	fmt.Println("IndicationType: %d", indicationMsg.IndType)
 	log.Printf("IndicationHeader: %x", indicationMsg.IndHeader)
+	fmt.Println("IndicationHeader: %x", indicationMsg.IndHeader)
 	log.Printf("IndicationMessage: %x", indicationMsg.IndMessage)
+	fmt.Println("IndicationMessage: %x", indicationMsg.IndMessage)
 	log.Printf("CallProcessID: %x", indicationMsg.CallProcessID)
+	fmt.Println("CallProcessID: %x", indicationMsg.CallProcessID)
 
 	indicationHdr, err := e2sm.GetIndicationHeader(indicationMsg.IndHeader)
 	if err != nil {
@@ -177,15 +212,18 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 	var plmnIDHdr string
 	var sliceIDHdr int32
 	var fiveQIHdr int64
-
+        fmt.Println("//////////4 var defined")
 	log.Printf("-----------RIC Indication Header-----------")
 	if indicationHdr.IndHdrType == 1 {
+		fmt.Println("//////////entered  if indicationHdr.IndHdrType 1")
 		log.Printf("RIC Indication Header Format: %d", indicationHdr.IndHdrType)
 		indHdrFormat1 := indicationHdr.IndHdr.(*IndicationHeaderFormat1)
 
 		log.Printf("GlobalKPMnodeIDType: %d", indHdrFormat1.GlobalKPMnodeIDType)
+		fmt.Println("////indHdrFormat1.GlobalKPMnodeIDType = %d", indHdrFormat1.GlobalKPMnodeIDType)
 
 		if indHdrFormat1.GlobalKPMnodeIDType == 1 {
+			fmt.Println("//////////entered  if indHdrFormat1.GlobalKPMnodeIDType 1")
 			globalKPMnodegNBID := indHdrFormat1.GlobalKPMnodeID.(GlobalKPMnodegNBIDType)
 
 			globalgNBID := globalKPMnodegNBID.GlobalgNBID
@@ -205,6 +243,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 				log.Printf("gNB-DU ID: %x", globalKPMnodegNBID.GnbDUID.Buf)
 			}
 		} else if indHdrFormat1.GlobalKPMnodeIDType == 2 {
+			fmt.Println("//////////entered  else if indHdrFormat1.GlobalKPMnodeIDType 2")
 			globalKPMnodeengNBID := indHdrFormat1.GlobalKPMnodeID.(GlobalKPMnodeengNBIDType)
 
 			log.Printf("PlmnID: %x", globalKPMnodeengNBID.PlmnID.Buf)
@@ -214,6 +253,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 				log.Printf("en-gNB ID ID: %x, Unused: %d", engNBID.Buf, engNBID.BitsUnused)
 			}
 		} else if indHdrFormat1.GlobalKPMnodeIDType == 3 {
+			fmt.Println("//////////entered  else if indHdrFormat1.GlobalKPMnodeIDType 3")
 			globalKPMnodengeNBID := indHdrFormat1.GlobalKPMnodeID.(GlobalKPMnodengeNBIDType)
 
 			log.Printf("PlmnID: %x", globalKPMnodengeNBID.PlmnID.Buf)
@@ -229,6 +269,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 				log.Printf("ng-eNB ID ID: %x, Unused: %d", ngeNBID.Buf, ngeNBID.BitsUnused)
 			}
 		} else if indHdrFormat1.GlobalKPMnodeIDType == 4 {
+			fmt.Println("//////////entered  else if indHdrFormat1.GlobalKPMnodeIDType 4")
 			globalKPMnodeeNBID := indHdrFormat1.GlobalKPMnodeID.(GlobalKPMnodeeNBIDType)
 
 			log.Printf("PlmnID: %x", globalKPMnodeeNBID.PlmnID.Buf)
@@ -251,6 +292,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 
 		if indHdrFormat1.NRCGI != nil {
 
+			fmt.Println("//////////entered  if indHdrFormat1.NRCGI")
 			log.Printf("nRCGI.PlmnID: %x", indHdrFormat1.NRCGI.PlmnID.Buf)
 			log.Printf("nRCGI.NRCellID ID: %x, Unused: %d", indHdrFormat1.NRCGI.NRCellID.Buf, indHdrFormat1.NRCGI.NRCellID.BitsUnused)
 
@@ -261,10 +303,19 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 				return
 			}
 		} else {
+			fmt.Println("entered else in if indHdrFormat1.NRCGI ! nil in cellidhdr")
 			cellIDHdr = ""
 		}
+	        fmt.Println("after else in if indHdrFormat1.NRCGI ! nil cellIDHdr: %d", cellIDHdr)
+		//var cellMetrics CellMetricsEntry
+		//fmt.Println("///after var cellmetrics cellIDHdr = %d=", cellIDHdr)
+		//cellMetrics.CellID = cellIDHdr
+		//cellMetrics.MeasPeriodPDCP = 20
+		//c.writeCellMetrics_db(cellMetrics)
+		//fmt.Println("////passed write uemetrics")
 
 		if indHdrFormat1.PlmnID != nil {
+			fmt.Println("//////////////entered if indHdrFormat1.PlmnID ") 
 			log.Printf("PlmnID: %x", indHdrFormat1.PlmnID.Buf)
 
 			plmnIDHdr, err = e2sm.ParsePLMNIdentity(indHdrFormat1.PlmnID.Buf, indHdrFormat1.PlmnID.Size)
@@ -274,10 +325,13 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 				return
 			}
 		} else {
+			fmt.Println("entered else in if indHdrFormat1.NRCGI ! nil for plmnidhdr")
 			plmnIDHdr = ""
 		}
+	        fmt.Println("after else in if indHdrFormat1.NRCGI ! nil plmnIDHdr: %d", plmnIDHdr)
 
 		if indHdrFormat1.SliceID != nil {
+			fmt.Println("//////////////entered if indHdrFormat1.SliceID ") 
 			log.Printf("SST: %x", indHdrFormat1.SliceID.SST.Buf)
 
 			if indHdrFormat1.SliceID.SD != nil {
@@ -295,39 +349,16 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 		}
 
 		if indHdrFormat1.FiveQI != -1 {
+			fmt.Println("//////////////entered if indHdrFormat1.FiveQI != -1") 
+			fmt.Println("5QI: %d", indHdrFormat1.FiveQI) 
 			log.Printf("5QI: %d", indHdrFormat1.FiveQI)
 		}
 		fiveQIHdr = indHdrFormat1.FiveQI
 
 		if indHdrFormat1.Qci != -1 {
 			log.Printf("QCI: %d", indHdrFormat1.Qci)
+			fmt.Println("QCI: %d", indHdrFormat1.Qci)
 		}
-
-		if indHdrFormat1.UeMessageType != -1 {
-			log.Printf("Ue Report type: %d", indHdrFormat1.UeMessageType)
-		}
-
-		if indHdrFormat1.GnbDUID != nil {
-			log.Printf("gNB-DU-ID: %x", indHdrFormat1.GnbDUID.Buf)
-		}
-
-		if indHdrFormat1.GnbNameType == 1 {
-			log.Printf("gNB-DU-Name: %x", (indHdrFormat1.GnbName.(GNB_DU_Name)).Buf)
-		} else if indHdrFormat1.GnbNameType == 2 {
-			log.Printf("gNB-CU-CP-Name: %x", (indHdrFormat1.GnbName.(GNB_CU_CP_Name)).Buf)
-		} else if indHdrFormat1.GnbNameType == 3 {
-			log.Printf("gNB-CU-UP-Name: %x", (indHdrFormat1.GnbName.(GNB_CU_UP_Name)).Buf)
-		}
-
-		if indHdrFormat1.GlobalgNBID != nil {
-			log.Printf("PlmnID: %x", indHdrFormat1.GlobalgNBID.PlmnID.Buf)
-			log.Printf("gNB ID Type: %d", indHdrFormat1.GlobalgNBID.GnbIDType)
-			if indHdrFormat1.GlobalgNBID.GnbIDType == 1 {
-				gNBID := indHdrFormat1.GlobalgNBID.GnbID.(GNBID)
-				log.Printf("gNB ID ID: %x, Unused: %d", gNBID.Buf, gNBID.BitsUnused)
-			}
-		}
-
 	} else {
 		xapp.Logger.Error("Unknown RIC Indication Header Format: %d", indicationHdr.IndHdrType)
 		log.Printf("Unknown RIC Indication Header Format: %d", indicationHdr.IndHdrType)
@@ -338,6 +369,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 	if err != nil {
 		xapp.Logger.Error("Failed to decode RIC Indication Message: %v", err)
 		log.Printf("Failed to decode RIC Indication Message: %v", err)
+		fmt.Println("//////////////entered indMsg, err = e2sm.GetIndicationMessage check ric indication failure") 
 		return
 	}
 
@@ -349,17 +381,21 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 	var timestampPRB *Timestamp
 	var availPRBDL int64
 	var availPRBUL int64
+	fmt.Println("//////////////passed 8 var in indication") 
 
 	log.Printf("-----------RIC Indication Message-----------")
 	log.Printf("StyleType: %d", indMsg.StyleType)
+	fmt.Println("----------RIC Indication Message-----------")
 	if indMsg.IndMsgType == 1 {
 		log.Printf("RIC Indication Message Format: %d", indMsg.IndMsgType)
 
 		indMsgFormat1 := indMsg.IndMsg.(*IndicationMessageFormat1)
 
 		log.Printf("PMContainerCount: %d", indMsgFormat1.PMContainerCount)
+		fmt.Println("PMContainerCount: %d", indMsgFormat1.PMContainerCount)
 
 		for i := 0; i < indMsgFormat1.PMContainerCount; i++ {
+			fmt.Println("/////////entered for i = 0 i indMsgFormat1.PMContainerCount")
 			flag = false
 			timestampPDCPBytes = nil
 			dlPDCPBytes = -1
@@ -369,15 +405,20 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 			availPRBUL = -1
 
 			log.Printf("PMContainer[%d]: ", i)
+			fmt.Println("PMContainer[%d]: ", i)
 
 			pmContainer := indMsgFormat1.PMContainers[i]
+			fmt.Println("//// pmContainer %s", pmContainer)
 
 			if pmContainer.PFContainer != nil {
+				fmt.Println("////////entered if pmContainer.PFContainer nil")
 				containerType = pmContainer.PFContainer.ContainerType
+				fmt.Println("//// in if pmContainer.PFContainer != nil containerType: %d", containerType)
 
 				log.Printf("PFContainerType: %d", containerType)
 
 				if containerType == 1 {
+					fmt.Println("/////////entered in for loop if containerType == 1 oDU")
 					log.Printf("oDU PF Container: ")
 
 					oDU := pmContainer.PFContainer.Container.(*ODUPFContainerType)
@@ -389,33 +430,76 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 						log.Printf("CellResourceReport[%d]: ", j)
 
 						cellResourceReport := oDU.CellResourceReports[j]
+						
+						var ueMetrics UeMetricsEntry
+						var cellMetrics CellMetricsEntry
 
 						log.Printf("nRCGI.PlmnID: %x", cellResourceReport.NRCGI.PlmnID.Buf)
 						log.Printf("nRCGI.nRCellID: %x", cellResourceReport.NRCGI.NRCellID.Buf)
+						
+						ueMetrics.nRPlmnID = cellResourceReport.NRCGI.PlmnID.Buf
+						ueMetrics.nRCellID = cellResourceReport.NRCGI.NRCellID.Buf
+						fmt.Println("ueMetrics.nRPlmnID= %x", cellResourceReport.NRCGI.PlmnID.Buf)
+						fmt.Println("ueMetrics.nRCellID= %x", cellResourceReport.NRCGI.NRCellID.Buf)
+						
+						cellMetrics.nRPlmnID = cellResourceReport.NRCGI.PlmnID.Buf
+						cellMetrics.nRCellID = cellResourceReport.NRCGI.NRCellID.Buf
 
 						cellID, err := e2sm.ParseNRCGI(cellResourceReport.NRCGI)
+						fmt.Println("//// cellID = e2sm.ParseNRCGI cellResourceReport.NRCGI: %s", cellID)
+						fmt.Println("//// err = e2sm.ParseNRCGI cellResourceReport.NRCGI: %s", err)
 						if err != nil {
 							xapp.Logger.Error("Failed to parse CellID in DU PF Container: %v", err)
 							log.Printf("Failed to parse CellID in DU PF Container: %v", err)
 							continue
 						}
+						
+
+						//ueMetrics.UeID = ueID
+						//log.Printf("UeID: %d", ueID)
+						//ueMetrics.MeasPeriodPDCP = 20
+						ueMetrics.CellID = cellID
+						fmt.Println("/////////////after first ueMetrics.CellID = cellID")
+
+						//ueMetrics.MeasTimeRF.TVsec = timestamp.TVsec
+						//ueMetrics.MeasTimeRF.TVnsec = timestamp.TVnsec
+						c.writeUeMetrics_db(ueMetrics)
+						fmt.Println("//////...............passed write................../////...................")
+						
 						if cellID == cellIDHdr {
+							fmt.Println("//////if cellID == cellIDHdr = true")
 							flag = true
 						}
+						cellMetrics.CellID = cellID
+						fmt.Println("cellMetrics.CellID = cellID: %d", cellID)
 
 						log.Printf("TotalofAvailablePRBsDL: %d", cellResourceReport.TotalofAvailablePRBs.DL)
+						fmt.Println("TotalofAvailablePRBsDL: %d", cellResourceReport.TotalofAvailablePRBs.DL)
 						log.Printf("TotalofAvailablePRBsUL: %d", cellResourceReport.TotalofAvailablePRBs.UL)
+						fmt.Println("TotalofAvailablePRBsUL: %d", cellResourceReport.TotalofAvailablePRBs.UL)
+						
+						
+						cellMetrics.TotalofAvailablePRBsDL = cellResourceReport.TotalofAvailablePRBs.DL
+						cellMetrics.TotalofAvailablePRBsUL = cellResourceReport.TotalofAvailablePRBs.UL
+						cellMetrics.MeasPeriodPDCP = 20
+						
+						c.writeCellMetrics_db(cellMetrics)
+						fmt.Println("////........../////passed write cellMetrics........////")
 
 						if flag {
 							availPRBDL = cellResourceReport.TotalofAvailablePRBs.DL
+							fmt.Println("if flag availPRBDL %d", availPRBDL)
 							availPRBUL = cellResourceReport.TotalofAvailablePRBs.UL
+							fmt.Println("if flag availPRBUL %d", availPRBUL)
 						}
 
 						servedPlmnPerCellCount := cellResourceReport.ServedPlmnPerCellCount
 						log.Printf("ServedPlmnPerCellCount: %d", servedPlmnPerCellCount)
+						fmt.Println("ServedPlmnPerCellCount: %d", servedPlmnPerCellCount)
 
 						for k := 0; k < servedPlmnPerCellCount; k++ {
 							log.Printf("ServedPlmnPerCell[%d]: ", k)
+							fmt.Println("ServedPlmnPerCell[%d]: ", k)
 
 							servedPlmnPerCell := cellResourceReport.ServedPlmnPerCells[k]
 
@@ -444,8 +528,25 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 										fQIPERSlicesPerPlmnPerCell := slicePerPlmnPerCell.FQIPERSlicesPerPlmnPerCells[m]
 
 										log.Printf("5QI: %d", fQIPERSlicesPerPlmnPerCell.FiveQI)
+										fmt.Println("5QI: %d", fQIPERSlicesPerPlmnPerCell.FiveQI)
 										log.Printf("PrbUsageDL: %d", fQIPERSlicesPerPlmnPerCell.PrbUsage.DL)
+										fmt.Println("PrbUsageDL: %d", fQIPERSlicesPerPlmnPerCell.PrbUsage.DL)
 										log.Printf("PrbUsageUL: %d", fQIPERSlicesPerPlmnPerCell.PrbUsage.UL)
+										fmt.Println("PrbUsageUL: %d", fQIPERSlicesPerPlmnPerCell.PrbUsage.UL)
+										
+										ueMetrics.FiveQI = fQIPERSlicesPerPlmnPerCell.FiveQI
+										fmt.Println("/////////////after second ueMetrics.ueMetrics.FiveQI")
+										
+										ueMetrics.PRBUsageUL = fQIPERSlicesPerPlmnPerCell.PrbUsage.DL
+										fmt.Println("/////////////after third ueMetrics.PrbUsageDL")
+										
+										ueMetrics.PRBUsageUL = fQIPERSlicesPerPlmnPerCell.PrbUsage.UL
+										fmt.Println("/////////////after forth ueMetrics.PrbUsageUL")
+
+										//ueMetrics.MeasTimeRF.TVsec = timestamp.TVsec
+										//ueMetrics.MeasTimeRF.TVnsec = timestamp.TVnsec
+										c.writeUeMetrics_db(ueMetrics)
+										fmt.Println("//////...............passed second ewrite................../////...................")
 									}
 								}
 							}
@@ -453,6 +554,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 							if servedPlmnPerCell.DUPMEPC != nil {
 								perQCIReportCount := servedPlmnPerCell.DUPMEPC.PerQCIReportCount
 								log.Printf("PerQCIReportCount: %d", perQCIReportCount)
+								fmt.Println("PerQCIReportCount: %d", perQCIReportCount)
 
 								for l := 0; l < perQCIReportCount; l++ {
 									log.Printf("PerQCIReports[%d]: ", l)
@@ -460,29 +562,55 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 									perQCIReport := servedPlmnPerCell.DUPMEPC.PerQCIReports[l]
 
 									log.Printf("QCI: %d", perQCIReport.QCI)
+									fmt.Println("QCI: %d", perQCIReport.QCI)
 									log.Printf("PrbUsageDL: %d", perQCIReport.PrbUsage.DL)
 									log.Printf("PrbUsageUL: %d", perQCIReport.PrbUsage.UL)
+									
+									ueMetrics.QCI = perQCIReport.QCI
+									fmt.Println("/////////////after forth ueMetrics.QCI")
+										    
+							                ueMetrics.PRBUsageDL = perQCIReport.PrbUsage.DL
+									fmt.Println("/////////////after fifth ueMetrics.PrbUsageDL")
+
+									ueMetrics.PRBUsageUL = perQCIReport.PrbUsage.UL
+									fmt.Println("/////////////after sixth ueMetrics.PrbUsageUL")
+									
+									c.writeUeMetrics_db(ueMetrics)
+									fmt.Println("//////...............passed third ewrite................../////...................")
 								}
 							}
 						}
 					}
 				} else if containerType == 2 {
+					fmt.Println("/////////entered in for loop else if containerType == 2 oCU-CP")
 					log.Printf("oCU-CP PF Container: ")
 
 					oCUCP := pmContainer.PFContainer.Container.(*OCUCPPFContainerType)
 
 					if oCUCP.GNBCUCPName != nil {
 						log.Printf("gNB-CU-CP Name: %x", oCUCP.GNBCUCPName.Buf)
+						fmt.Println("gNB-CU-CP Name: %x", oCUCP.GNBCUCPName.Buf)
 					}
 
 					log.Printf("NumberOfActiveUEs: %d", oCUCP.CUCPResourceStatus.NumberOfActiveUEs)
+					var ueMetrics UeMetricsEntry
+
+					ueMetrics.NumberOfActiveUEs = oCUCP.CUCPResourceStatus.NumberOfActiveUEs
+					fmt.Println("/////////////after first ueMetrics.NumberOfActiveUEs %d=", oCUCP.CUCPResourceStatus.NumberOfActiveUEs)
+
+					//ueMetrics.MeasTimeRF.TVsec = timestamp.TVsec
+					//ueMetrics.MeasTimeRF.TVnsec = timestamp.TVnsec
+					c.writeUeMetrics_db(ueMetrics)
+					fmt.Println("//////...............passed write................../////...................")
 				} else if containerType == 3 {
+					fmt.Println("/////////entered in for loop else if containerType == 3 oCU-UP")
 					log.Printf("oCU-UP PF Container: ")
 
 					oCUUP := pmContainer.PFContainer.Container.(*OCUUPPFContainerType)
 
 					if oCUUP.GNBCUUPName != nil {
 						log.Printf("gNB-CU-UP Name: %x", oCUUP.GNBCUUPName.Buf)
+						fmt.Println("gNB-CU-UP Name: %x", oCUUP.GNBCUUPName.Buf)
 					}
 
 					cuUPPFContainerItemCount := oCUUP.CUUPPFContainerItemCount
@@ -499,7 +627,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 						log.Printf("CU-UP Plmn Count: %d", cuUPPlmnCount)
 
 						for k := 0; k < cuUPPlmnCount; k++ {
-							log.Printf("CU-UP Plmn [%d]: ",k)
+							log.Printf("CU-UP Plmn [%d]: ", k)
 
 							cuUPPlmn := cuUPPFContainerItem.OCUUPPMContainer.CUUPPlmns[k]
 
@@ -509,6 +637,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 							if err != nil {
 								xapp.Logger.Error("Failed to parse PlmnID in CU-UP PF Container: %v", err)
 								log.Printf("Failed to parse PlmnID in CU-UP PF Container: %v", err)
+								fmt.Println("Failed to parse PlmnID in CU-UP PF Container: %v", err)
 								continue
 							}
 
@@ -543,6 +672,14 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 
 										fiveQI := fQIPERSlicesPerPlmn.FiveQI
 										log.Printf("5QI: %d", fiveQI)
+										
+										var ueMetrics UeMetricsEntry
+										
+										ueMetrics.FiveQI = fiveQI
+										fmt.Println("/////////////after 7th ueMetrics.fiveQI in type2")
+
+										c.writeUeMetrics_db(ueMetrics)
+										fmt.Println("//////...............passed 4th write................../////...................")
 
 										if plmnID == plmnIDHdr && sliceID == sliceIDHdr && fiveQI == fiveQIHdr {
 											flag = true
@@ -582,37 +719,54 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 								log.Printf("PerQCIReportCount: %d", cuUPPMEPCPerQCIReportCount)
 
 								for l := 0; l < cuUPPMEPCPerQCIReportCount; l++ {
-									log.Printf("PerQCIReport[%d]: ",l)
+									log.Printf("PerQCIReport[%d]: ", l)
 
 									cuUPPMEPCPerQCIReport := cuUPPlmn.CUUPPMEPC.CUUPPMEPCPerQCIReports[l]
 
 									log.Printf("QCI: %d", cuUPPMEPCPerQCIReport.QCI)
+									var ueMetrics UeMetricsEntry
+									ueMetrics.QCI = cuUPPMEPCPerQCIReport.QCI
+									fmt.Println("/////////////after 8th ueMetrics.QCI")
+
+									//c.writeUeMetrics_db(ueMetrics)
+									//fmt.Println("//////...............passed 5th write................../////...................")
 
 									if cuUPPMEPCPerQCIReport.PDCPBytesDL != nil {
 										log.Printf("PDCPBytesDL: %x", cuUPPMEPCPerQCIReport.PDCPBytesDL.Buf)
+										ueMetrics.PDCPBytesDL = cuUPPMEPCPerQCIReport.PDCPBytesDL.Buf
+										fmt.Println("ueMetrics.PDCPBytesDL: %x",cuUPPMEPCPerQCIReport.PDCPBytesDL.Buf)
+
 									}
 									if cuUPPMEPCPerQCIReport.PDCPBytesUL != nil {
 										log.Printf("PDCPBytesUL: %x", cuUPPMEPCPerQCIReport.PDCPBytesUL.Buf)
+										ueMetrics.PDCPBytesUL = cuUPPMEPCPerQCIReport.PDCPBytesUL.Buf
+										fmt.Println("ueMetrics.PDCPBytesUL: %x",cuUPPMEPCPerQCIReport.PDCPBytesUL.Buf)
 									}
+									c.writeUeMetrics_db(ueMetrics)
+									fmt.Println("//////...............passed 5th write................../////...................")
 								}
 							}
 						}
 					}
 				} else {
+					fmt.Println("/////////////else in for loop Unknown PF Container type")
 					xapp.Logger.Error("Unknown PF Container type: %d", containerType)
 					log.Printf("Unknown PF Container type: %d", containerType)
 					continue
 				}
 			}
-
+                        fmt.Println("///////-----/////--------before if pmContainer.RANContainer %x", pmContainer.RANContainer)
 			if pmContainer.RANContainer != nil {
 				log.Printf("RANContainer: %x", pmContainer.RANContainer.Timestamp.Buf)
+				fmt.Println("/////////////entered if pmContainer.RANContainer  nil")
 
 				timestamp, _ := e2sm.ParseTimestamp(pmContainer.RANContainer.Timestamp.Buf, pmContainer.RANContainer.Timestamp.Size)
 				log.Printf("Timestamp=[sec: %d, nsec: %d]", timestamp.TVsec, timestamp.TVnsec)
 
 				containerType = pmContainer.RANContainer.ContainerType
+				fmt.Println("in pmContainer.RANContainer nil  containerType %d", containerType)
 				if containerType == 1 {
+					fmt.Println("/////entered if containertype in RANcontainer == 1 in RANcontainer")
 					log.Printf("DU Usage Report: ")
 
 					oDUUE := pmContainer.RANContainer.Container.(DUUsageReportType)
@@ -642,15 +796,22 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 								continue
 							}
 
-							var ueMetrics *UeMetricsEntry
-							if isUeExist, _ := c.client.Exists(strconv.FormatInt(ueID, 10)).Result(); isUeExist == 1 {
-								ueJsonStr, _ := c.client.Get(strconv.FormatInt(ueID, 10)).Result()
-								json.Unmarshal([]byte(ueJsonStr), ueMetrics)
-							} else {
-								ueMetrics = &UeMetricsEntry{}
-							}
+							var ueMetrics UeMetricsEntry
+							fmt.Println("/////var ueMetrics defined/////////")
+							//if isUeExist, _ := c.client.Exists(strconv.FormatInt(ueID, 10)).Result(); isUeExist == 1 {
+							//	ueJsonStr, _ := c.client.Get(strconv.FormatInt(ueID, 10)).Result()
+							//	json.Unmarshal([]byte(ueJsonStr), ueMetrics)
+							//} else {
+							//	ueMetrics = &UeMetricsEntry{}
+							//}
 
 							ueMetrics.ServingCellID = servingCellID
+
+							ueMetrics.UeID = ueID
+							log.Printf("UeID: %d", ueID)
+							ueMetrics.ServingCellID = servingCellID
+							log.Printf("ServingCellID: %s", ueMetrics.ServingCellID)
+							ueMetrics.MeasPeriodRF = 20
 
 							if flag {
 								timestampPRB = timestamp
@@ -666,22 +827,24 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 							if ueResourceReportItem.PRBUsageUL != -1 {
 								ueMetrics.PRBUsageUL = ueResourceReportItem.PRBUsageUL
 							}
-
-							newUeJsonStr, err := json.Marshal(ueMetrics)
-							if err != nil {
-								xapp.Logger.Error("Failed to marshal UeMetrics with UE ID [%s]: %v", ueID, err)
-								log.Printf("Failed to marshal UeMetrics with UE ID [%s]: %v", ueID, err)
-								continue
-							}
-							err = c.client.Set(strconv.FormatInt(ueID, 10), newUeJsonStr, 0).Err()
-							if err != nil {
-								xapp.Logger.Error("Failed to set UeMetrics into redis with UE ID [%s]: %v", ueID, err)
-								log.Printf("Failed to set UeMetrics into redis with UE ID [%s]: %v", ueID, err)
-								continue
-							}
+							fmt.Println("////////////First ueMetrics before writedB= %s", ueMetrics)
+							c.writeUeMetrics_db(ueMetrics)
+							//newUeJsonStr, err := json.Marshal(ueMetrics)
+							//if err != nil {
+							//xapp.Logger.Error("Failed to marshal UeMetrics with UE ID [%s]: %v", ueID, err)
+							//log.Printf("Failed to marshal UeMetrics with UE ID [%s]: %v", ueID, err)
+							//continue
+							//}
+							//err = c.client.Set(strconv.FormatInt(ueID, 10), newUeJsonStr, 0).Err()
+							//if err != nil {
+							//xapp.Logger.Error("Failed to set UeMetrics into redis with UE ID [%s]: %v", ueID, err)
+							//log.Printf("Failed to set UeMetrics into redis with UE ID [%s]: %v", ueID, err)
+							//continue
+							//}
 						}
 					}
 				} else if containerType == 2 {
+					fmt.Println("/////////////after first-else if containerType in RANcontainer== 2")
 					log.Printf("CU-CP Usage Report: ")
 
 					oCUCPUE := pmContainer.RANContainer.Container.(CUCPUsageReportType)
@@ -711,18 +874,31 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 								continue
 							}
 
-							var ueMetrics *UeMetricsEntry
-							if isUeExist, _ := c.client.Exists(strconv.FormatInt(ueID, 10)).Result(); isUeExist == 1 {
-								ueJsonStr, _ := c.client.Get(strconv.FormatInt(ueID, 10)).Result()
-								json.Unmarshal([]byte(ueJsonStr), ueMetrics)
-							} else {
-								ueMetrics = &UeMetricsEntry{}
-							}
+							var ueMetrics UeMetricsEntry
 
+							ueMetrics.UeID = ueID
+							log.Printf("UeID: %d", ueID)
 							ueMetrics.ServingCellID = servingCellID
+							log.Printf("ServingCellID: %s", ueMetrics.ServingCellID)
+							fmt.Println("/////////////after first write uemetrics ServingCellID: %s", ueMetrics.ServingCellID)
 
 							ueMetrics.MeasTimeRF.TVsec = timestamp.TVsec
 							ueMetrics.MeasTimeRF.TVnsec = timestamp.TVnsec
+
+							//ueMetrics.MeasPeriodPDCP = 20
+							//ueMetrics.MeasPeriodPRB = 20
+
+							//if isUeExist, _ := c.client.Exists(strconv.FormatInt(ueID, 10)).Result(); isUeExist == 1 {
+							//	ueJsonStr, _ := c.client.Get(strconv.FormatInt(ueID, 10)).Result()
+							//	json.Unmarshal([]byte(ueJsonStr), ueMetrics)
+							//} else {
+							//	ueMetrics = &UeMetricsEntry{}
+							//}
+
+							//ueMetrics.ServingCellID = servingCellID
+
+							//ueMetrics.MeasTimeRF.TVsec = timestamp.TVsec
+							//ueMetrics.MeasTimeRF.TVnsec = timestamp.TVnsec
 
 							if ueResourceReportItem.ServingCellRF != nil {
 								err = json.Unmarshal(ueResourceReportItem.ServingCellRF.Buf, &ueMetrics.ServingCellRF)
@@ -742,21 +918,24 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 								}
 							}
 
-							newUeJsonStr, err := json.Marshal(ueMetrics)
-							if err != nil {
-								xapp.Logger.Error("Failed to marshal UeMetrics with UE ID [%s]: %v", ueID, err)
-								log.Printf("Failed to marshal UeMetrics with UE ID [%s]: %v", ueID, err)
-								continue
-							}
-							err = c.client.Set(strconv.FormatInt(ueID, 10), newUeJsonStr, 0).Err()
-							if err != nil {
-								xapp.Logger.Error("Failed to set UeMetrics into redis with UE ID [%s]: %v", ueID, err)
-								log.Printf("Failed to set UeMetrics into redis with UE ID [%s]: %v", ueID, err)
-								continue
-							}
+							fmt.Println("////////////Second ueMetrics before writedB= %s", ueMetrics)
+							c.writeUeMetrics_db(ueMetrics)
+							//newUeJsonStr, err := json.Marshal(ueMetrics)
+							//if err != nil {
+							//xapp.Logger.Error("Failed to marshal UeMetrics with UE ID [%s]: %v", ueID, err)
+							//log.Printf("Failed to marshal UeMetrics with UE ID [%s]: %v", ueID, err)
+							//continue
+							//}
+							//err = c.client.Set(strconv.FormatInt(ueID, 10), newUeJsonStr, 0).Err()
+							//if err != nil {
+							//xapp.Logger.Error("Failed to set UeMetrics into redis with UE ID [%s]: %v", ueID, err)
+							//log.Printf("Failed to set UeMetrics into redis with UE ID [%s]: %v", ueID, err)
+							//continue
+							//}
 						}
 					}
 				} else if containerType == 6 {
+					fmt.Println("/////////////after second write entered  else if containerType ==6")
 					log.Printf("CU-UP Usage Report: ")
 
 					oCUUPUE := pmContainer.RANContainer.Container.(CUUPUsageReportType)
@@ -786,15 +965,20 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 								continue
 							}
 
-							var ueMetrics *UeMetricsEntry
-							if isUeExist, _ := c.client.Exists(strconv.FormatInt(ueID, 10)).Result(); isUeExist == 1 {
-								ueJsonStr, _ := c.client.Get(strconv.FormatInt(ueID, 10)).Result()
-								json.Unmarshal([]byte(ueJsonStr), ueMetrics)
-							} else {
-								ueMetrics = &UeMetricsEntry{}
-							}
+							var ueMetrics UeMetricsEntry
 
+							//ueMetrics.UeID = ueID
+							log.Printf("UeID: %d", ueID)
 							ueMetrics.ServingCellID = servingCellID
+							log.Printf("ServingCellID: %s", ueMetrics.ServingCellID)
+							//if isUeExist, _ := c.client.Exists(strconv.FormatInt(ueID, 10)).Result(); isUeExist == 1 {
+							//	ueJsonStr, _ := c.client.Get(strconv.FormatInt(ueID, 10)).Result()
+							//	json.Unmarshal([]byte(ueJsonStr), ueMetrics)
+							//} else {
+							//	ueMetrics = &UeMetricsEntry{}
+							//}
+
+							//ueMetrics.ServingCellID = servingCellID
 
 							if flag {
 								timestampPDCPBytes = timestamp
@@ -804,7 +988,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 							ueMetrics.MeasTimestampPDCPBytes.TVnsec = timestamp.TVnsec
 
 							if ueResourceReportItem.PDCPBytesDL != nil {
-								ueMetrics.PDCPBytesDL, err = e2sm.ParseInteger(ueResourceReportItem.PDCPBytesDL.Buf, ueResourceReportItem.PDCPBytesDL.Size)
+								ueMetrics.PDCPBytesDLDL, err = e2sm.ParseInteger(ueResourceReportItem.PDCPBytesDL.Buf, ueResourceReportItem.PDCPBytesDL.Size)
 								if err != nil {
 									xapp.Logger.Error("Failed to parse PDCPBytesDL in CU-UP Usage Report with UE ID [%s]: %v", ueID, err)
 									log.Printf("Failed to parse PDCPBytesDL in CU-UP Usage Report with UE ID [%s]: %v", ueID, err)
@@ -813,7 +997,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 							}
 
 							if ueResourceReportItem.PDCPBytesUL != nil {
-								ueMetrics.PDCPBytesUL, err = e2sm.ParseInteger(ueResourceReportItem.PDCPBytesUL.Buf, ueResourceReportItem.PDCPBytesUL.Size)
+								ueMetrics.PDCPBytesULUL, err = e2sm.ParseInteger(ueResourceReportItem.PDCPBytesUL.Buf, ueResourceReportItem.PDCPBytesUL.Size)
 								if err != nil {
 									xapp.Logger.Error("Failed to parse PDCPBytesUL in CU-UP Usage Report with UE ID [%s]: %v", ueID, err)
 									log.Printf("Failed to parse PDCPBytesUL in CU-UP Usage Report with UE ID [%s]: %v", ueID, err)
@@ -821,18 +1005,21 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 								}
 							}
 
-							newUeJsonStr, err := json.Marshal(ueMetrics)
-							if err != nil {
-								xapp.Logger.Error("Failed to marshal UeMetrics with UE ID [%s]: %v", ueID, err)
-								log.Printf("Failed to marshal UeMetrics with UE ID [%s]: %v", ueID, err)
-								continue
-							}
-							err = c.client.Set(strconv.FormatInt(ueID, 10), newUeJsonStr, 0).Err()
-							if err != nil {
-								xapp.Logger.Error("Failed to set UeMetrics into redis with UE ID [%s]: %v", ueID, err)
-								log.Printf("Failed to set UeMetrics into redis with UE ID [%s]: %v", ueID, err)
-								continue
-							}
+							fmt.Println("/////////////3rd write ueMetrics: %s", ueMetrics)
+							c.writeUeMetrics_db(ueMetrics)
+							fmt.Println("/////passed write uemetrics")
+							//newUeJsonStr, err := json.Marshal(ueMetrics)
+							//if err != nil {
+							//xapp.Logger.Error("Failed to marshal UeMetrics with UE ID [%s]: %v", ueID, err)
+							//log.Printf("Failed to marshal UeMetrics with UE ID [%s]: %v", ueID, err)
+							//continue
+							//}
+							//err = c.client.Set(strconv.FormatInt(ueID, 10), newUeJsonStr, 0).Err()
+							//if err != nil {
+							//xapp.Logger.Error("Failed to set UeMetrics into redis with UE ID [%s]: %v", ueID, err)
+							//log.Printf("Failed to set UeMetrics into redis with UE ID [%s]: %v", ueID, err)
+							//continue
+							//}
 						}
 					}
 				} else {
@@ -843,58 +1030,102 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
 			}
 
 			if flag {
-				var cellMetrics *CellMetricsEntry
-				if isCellExist, _ := c.client.Exists(cellIDHdr).Result(); isCellExist == 1 {
-					cellJsonStr, _ := c.client.Get(cellIDHdr).Result()
-					json.Unmarshal([]byte(cellJsonStr), cellMetrics)
-				} else {
-					cellMetrics = &CellMetricsEntry{}
-				}
+				var cellMetrics CellMetricsEntry
+
+				cellMetrics.MeasPeriodPDCP = 20
+				cellMetrics.MeasPeriodPRB = 20
+				//cellMetrics.CellID = cellIDHdr
+				//if isCellExist, _ := c.client.Exists(cellIDHdr).Result(); isCellExist == 1 {
+				//	cellJsonStr, _ := c.client.Get(cellIDHdr).Result()
+				//	json.Unmarshal([]byte(cellJsonStr), cellMetrics)
+				//} else {
+				//	cellMetrics = &CellMetricsEntry{}
+				//}
 
 				if timestampPDCPBytes != nil {
+					fmt.Println("////entered if timestampPDCPBytes != nil ")
 					cellMetrics.MeasTimestampPDCPBytes.TVsec = timestampPDCPBytes.TVsec
 					cellMetrics.MeasTimestampPDCPBytes.TVnsec = timestampPDCPBytes.TVnsec
 				}
 				if dlPDCPBytes != -1 {
+					fmt.Println("////entered if dlPDCPBytes != -1 ")
 					cellMetrics.PDCPBytesDL = dlPDCPBytes
 				}
 				if ulPDCPBytes != -1 {
+					fmt.Println("////entered if ulPDCPBytes != -1")
 					cellMetrics.PDCPBytesUL = ulPDCPBytes
 				}
 				if timestampPRB != nil {
+					fmt.Println("////entered if timestampPRB != nil")
 					cellMetrics.MeasTimestampPRB.TVsec = timestampPRB.TVsec
 					cellMetrics.MeasTimestampPRB.TVnsec = timestampPRB.TVnsec
 				}
 				if availPRBDL != -1 {
+					fmt.Println("////entered if availPRBDL != -1")
 					cellMetrics.AvailPRBDL = availPRBDL
 				}
 				if availPRBUL != -1 {
+					fmt.Println("////entered if availPRBUL != -1 ")
 					cellMetrics.AvailPRBUL = availPRBUL
 				}
 
-				newCellJsonStr, err := json.Marshal(cellMetrics)
-				if err != nil {
-					xapp.Logger.Error("Failed to marshal CellMetrics with CellID [%s]: %v", cellIDHdr, err)
-					log.Printf("Failed to marshal CellMetrics with CellID [%s]: %v", cellIDHdr, err)
-					continue
-				}
-				err = c.client.Set(cellIDHdr, newCellJsonStr, 0).Err()
-				if err != nil {
-					xapp.Logger.Error("Failed to set CellMetrics into redis with CellID [%s]: %v", cellIDHdr, err)
-					log.Printf("Failed to set CellMetrics into redis with CellID [%s]: %v", cellIDHdr, err)
-					continue
-				}
+				fmt.Println("////////////First cellMetrics before writedB= %s", cellMetrics)
+				c.writeCellMetrics_db(cellMetrics)
+				fmt.Println("////passed write uemetrics")
+				//newCellJsonStr, err := json.Marshal(cellMetrics)
+				//if err != nil {
+				//xapp.Logger.Error("Failed to marshal CellMetrics with CellID [%s]: %v", cellIDHdr, err)
+				//log.Printf("Failed to marshal CellMetrics with CellID [%s]: %v", cellIDHdr, err)
+				//continue
+				//}
+				//err = c.client.Set(cellIDHdr, newCellJsonStr, 0).Err()
+				//if err != nil {
+				//xapp.Logger.Error("Failed to set CellMetrics into redis with CellID [%s]: %v", cellIDHdr, err)
+				//log.Printf("Failed to set CellMetrics into redis with CellID [%s]: %v", cellIDHdr, err)
+				//continue
+				//}
 			}
 		}
 	} else {
 		xapp.Logger.Error("Unknown RIC Indication Message Format: %d", indMsg.IndMsgType)
 		log.Printf("Unkonw RIC Indication Message Format: %d", indMsg.IndMsgType)
+		fmt.Println("Unkonw RIC Indication Message Format: %d", indMsg.IndMsgType)
 		return
 	}
-
+	fmt.Println("///////passed indication main and get to return nil")
 	return nil
 }
 
+func (c *Control) writeUeMetrics_db(ueMetrics UeMetricsEntry) {
+	//Write UE metrics to InfluxDB using API
+	fmt.Println("////entered writeuemetrics func")
+	writeAPI := c.client.WriteAPIBlocking("my-org", "kpimon")
+	fmt.Println("/////passed writeAPI in writeuemetrics func")
+	ueMetricsJSON, err := json.Marshal(ueMetrics)
+	if err != nil {
+		xapp.Logger.Error("Marshal UE Metrics failed!")
+	}
+	p := influxdb2.NewPointWithMeasurement("ricIndication_UeMetrics").
+		AddField("UE Metrics", ueMetricsJSON).
+		SetTime(time.Now())
+	writeAPI.WritePoint(context.Background(), p)
+	xapp.Logger.Info("Wrote UE Metrics to InfluxDB")
+}
+func (c *Control) writeCellMetrics_db(cellMetrics CellMetricsEntry) {
+	//Write cell metrics to InfluxDB using API
+	fmt.Println("////entered writecellmetrics func")
+	writeAPI := c.client.WriteAPIBlocking("my-org", "kpimon")
+	fmt.Println("/////passed writeAPI in writecellmetrics")
+	cellMetricsJSON, er := json.Marshal(cellMetrics)
+	if er != nil {
+		xapp.Logger.Error("Marshal Cell Metrics failed!")
+	}
+	p := influxdb2.NewPointWithMeasurement("ricIndication_cellMetrics").
+		AddField("Cell Metrics", cellMetricsJSON).
+		SetTime(time.Now())
+	writeAPI.WritePoint(context.Background(), p)
+	xapp.Logger.Info("Wrote Cell Metrics to InfluxDB")
+}
 func (c *Control) handleSubscriptionResponse(params *xapp.RMRParams) (err error) {
 	xapp.Logger.Debug("The SubId in RIC_SUB_RESP is %d", params.SubId)
 	log.Printf("The SubId in RIC_SUB_RESP is %d", params.SubId)

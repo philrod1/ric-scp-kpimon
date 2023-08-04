@@ -23,7 +23,7 @@ memb_pm_Containers_constraint_1(const asn_TYPE_descriptor_t *td, const void *spt
 	/* Determine the number of elements */
 	size = _A_CSEQUENCE_FROM_VOID(sptr)->count;
 	
-	if((size >= 1 && size <= 8)) {
+	if((size >= 1 && size <= 512)) {
 		/* Perform validation of the inner elements */
 		return td->encoding_constraints.general_constraints(td, sptr, ctfailcb, app_key);
 	} else {
@@ -36,18 +36,18 @@ memb_pm_Containers_constraint_1(const asn_TYPE_descriptor_t *td, const void *spt
 
 static asn_oer_constraints_t asn_OER_type_pm_Containers_constr_2 CC_NOTUSED = {
 	{ 0, 0 },
-	-1	/* (SIZE(1..8)) */};
+	-1	/* (SIZE(1..512)) */};
 static asn_per_constraints_t asn_PER_type_pm_Containers_constr_2 CC_NOTUSED = {
 	{ APC_UNCONSTRAINED,	-1, -1,  0,  0 },
-	{ APC_CONSTRAINED,	 3,  3,  1,  8 }	/* (SIZE(1..8)) */,
+	{ APC_CONSTRAINED,	 9,  9,  1,  512 }	/* (SIZE(1..512)) */,
 	0, 0	/* No PER value map */
 };
 static asn_oer_constraints_t asn_OER_memb_pm_Containers_constr_2 CC_NOTUSED = {
 	{ 0, 0 },
-	-1	/* (SIZE(1..8)) */};
+	-1	/* (SIZE(1..512)) */};
 static asn_per_constraints_t asn_PER_memb_pm_Containers_constr_2 CC_NOTUSED = {
 	{ APC_UNCONSTRAINED,	-1, -1,  0,  0 },
-	{ APC_CONSTRAINED,	 3,  3,  1,  8 }	/* (SIZE(1..8)) */,
+	{ APC_CONSTRAINED,	 9,  9,  1,  512 }	/* (SIZE(1..512)) */,
 	0, 0	/* No PER value map */
 };
 static asn_TYPE_member_t asn_MBR_pm_Containers_2[] = {

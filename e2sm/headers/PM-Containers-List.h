@@ -12,6 +12,7 @@
 #include <asn_application.h>
 
 /* Including external dependencies */
+#include "RAN-Container.h"
 #include <constr_SEQUENCE.h>
 
 #ifdef __cplusplus
@@ -20,12 +21,11 @@ extern "C" {
 
 /* Forward declarations */
 struct PF_Container;
-struct RAN_Container;
 
 /* PM-Containers-List */
 typedef struct PM_Containers_List {
 	struct PF_Container	*performanceContainer;	/* OPTIONAL */
-	struct RAN_Container	*theRANContainer;	/* OPTIONAL */
+	RAN_Container_t	*theRANContainer;	/* OPTIONAL */
 	/*
 	 * This type is extensible,
 	 * possible extensions are below.

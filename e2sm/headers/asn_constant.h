@@ -9,6 +9,10 @@
 extern "C" {
 #endif
 
+#define min_val_GNB_CU_UP_ID (0)
+#define max_val_GNB_CU_UP_ID (68719476735)
+#define min_val_GNB_DU_ID (0)
+#define max_val_GNB_DU_ID (68719476735)
 #define maxofMessageProtocolTests (15)
 #define maxofRICstyles (63)
 #define maxnoofQCI (256)
@@ -18,9 +22,6 @@ extern "C" {
 #define maxCellingNBDU (512)
 #define maxofContainers (8)
 #define maxPLMN (12)
-#define maxofRANparamters (65536)
-#define maxUeReport (32)
-#define maxCellingNB (16384)
 
 
 #ifdef __cplusplus

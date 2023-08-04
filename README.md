@@ -1,8 +1,4 @@
-# kpimon
-KPIMON xApp for Bronze Release
+# upgraded-kpimon-xApp
+kpi1 xApp- upgraded kpimon xApp
 
-# Image Build
-
-```
-$ docker build . --tag kpimon:{TAG} --no-cache
-```
+For deployment please consider upgraded-kpimon xApp deployment instruction
